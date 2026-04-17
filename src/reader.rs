@@ -106,9 +106,14 @@ fn tokenize(blocks: &[Block]) -> Vec<Chunk> {
 fn tokenize_text(out: &mut Vec<Chunk>, text: &str, kind: ChunkKind, base_mult: f32) {
     for word in text.split_whitespace() {
         let mult = base_mult * punctuation_multiplier(word);
-        let orp = orp_index(word);
+        let clean = word.trim_matches(|c| c == '.' || c == ',');
+        if clean.is_empty() {
+            continue;
+        }
+
+        let orp = orp_index(clean);
         out.push(Chunk {
-            text: word.to_string(),
+            text: clean.to_string(),
             kind,
             multiplier: mult,
             orp,
@@ -139,6 +144,26 @@ pub fn orp_index(word: &str) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tokenize_text_handles_long_punctuation() {
+        let mut out = Vec::new();
+        tokenize_text(&mut out, "hello .......... world", ChunkKind::Word, 1.0);
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0].text, "hello");
+        assert_eq!(out[1].text, "world");
+    }
+
+    #[test]
+    fn tokenize_text_strips_trailing_punctuation_but_keeps_multiplier() {
+        let mut out = Vec::new();
+        tokenize_text(&mut out, "Hello, world...", ChunkKind::Word, 1.0);
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0].text, "Hello");
+        assert_eq!(out[0].multiplier, 1.5);
+        assert_eq!(out[1].text, "world");
+        assert_eq!(out[1].multiplier, 2.0);
+    }
 
     #[test]
     fn orp_index_buckets() {
