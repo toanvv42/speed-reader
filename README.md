@@ -22,17 +22,36 @@ Kitty / Sixel graphics), but falls back to half-blocks on plainer terms.
 
 ## Install
 
+### macOS — one-liner (prebuilt binary)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/toanvv42/speed-reader/master/install.sh | sh
+```
+
+Installs the latest release to `~/.local/bin`. Options:
+
+```sh
+# pin a version
+curl -fsSL .../install.sh | sh -s -- --version v0.1.0
+
+# custom prefix (binary → $PREFIX/bin)
+curl -fsSL .../install.sh | PREFIX=/usr/local sh
+```
+
+### From source (any platform)
+
 Requires a recent Rust toolchain.
 
 ```sh
-git clone https://github.com/<you>/speed-reader
-cd speed-reader
-make install         # builds release, installs to ~/.local/bin
+cargo install --git https://github.com/toanvv42/speed-reader
 ```
 
-Or just build and run from the repo:
+Or clone and build:
 
 ```sh
+git clone https://github.com/toanvv42/speed-reader
+cd speed-reader
+make install         # builds release, installs to ~/.local/bin
 make run             # builds and opens sample.md
 ```
 
