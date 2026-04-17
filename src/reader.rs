@@ -13,7 +13,7 @@ pub struct Chunk {
     pub image_url: Option<String>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ChunkKind {
     Word,
     Heading,
@@ -137,3 +137,86 @@ pub fn orp_index(word: &str) -> usize {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn orp_index_buckets() {
+        assert_eq!(orp_index(""), 0);
+        assert_eq!(orp_index("a"), 0);
+        assert_eq!(orp_index("hi"), 1);
+        assert_eq!(orp_index("hello"), 1);
+        assert_eq!(orp_index("mornings"), 2);
+        assert_eq!(orp_index("understand"), 3);
+        assert_eq!(orp_index("supercalifragilistic"), 4);
+    }
+
+    #[test]
+    fn from_blocks_produces_word_chunks_with_paragraph_separators() {
+        let blocks = vec![
+            Block::Text("hello world".into()),
+            Block::Text("second para".into()),
+        ];
+        let r = Reader::from_blocks(blocks);
+        let kinds: Vec<_> = r.chunks.iter().map(|c| c.kind).collect();
+        assert_eq!(
+            kinds,
+            vec![
+                ChunkKind::Word,
+                ChunkKind::Word,
+                ChunkKind::Paragraph,
+                ChunkKind::Word,
+                ChunkKind::Word,
+            ]
+        );
+    }
+
+    #[test]
+    fn advance_stops_at_end_and_retreat_saturates_at_zero() {
+        let r_blocks = vec![Block::Text("a b c".into())];
+        let mut r = Reader::from_blocks(r_blocks);
+        assert_eq!(r.index, 0);
+        r.advance(100);
+        assert_eq!(r.index, r.chunks.len() - 1);
+        assert!(r.at_end());
+        r.retreat(100);
+        assert_eq!(r.index, 0);
+    }
+
+    #[test]
+    fn empty_reader_reports_end_and_advance_is_noop() {
+        let mut r = Reader::empty();
+        assert!(r.at_end());
+        r.advance(5);
+        assert_eq!(r.index, 0);
+    }
+
+    #[test]
+    fn chunk_duration_scales_inversely_with_wpm() {
+        let r = Reader::from_blocks(vec![Block::Text("word".into())]);
+        let fast = r.chunk_duration(600);
+        let slow = r.chunk_duration(300);
+        assert!(slow > fast, "slower wpm must yield longer duration");
+    }
+
+    #[test]
+    fn chunk_duration_has_minimum_floor() {
+        let r = Reader::from_blocks(vec![Block::Text("word".into())]);
+        let d = r.chunk_duration(10_000);
+        assert!(d >= Duration::from_millis(20));
+    }
+
+    #[test]
+    fn image_block_produces_image_chunk_and_pauses_on_advance() {
+        let mut r = Reader::from_blocks(vec![
+            Block::Text("a".into()),
+            Block::Image("file.png".into()),
+        ]);
+        r.playing = true;
+        // chunks: [Word("a"), Paragraph, Image]
+        r.advance(2);
+        assert_eq!(r.current().map(|c| c.kind), Some(ChunkKind::Image));
+        assert!(!r.playing, "landing on image should pause playback");
+    }
+}

@@ -136,9 +136,10 @@ impl App {
         while let Ok(job) = self.image_rx.try_recv() {
             self.pending_image_urls.remove(&job.url);
             updated = true;
-            match job.bytes.and_then(|b| {
-                image::load_from_memory(&b).context("failed to decode image")
-            }) {
+            match job
+                .bytes
+                .and_then(|b| image::load_from_memory(&b).context("failed to decode image"))
+            {
                 Ok(img) => {
                     let proto = self.image_picker.new_resize_protocol(img);
                     self.image_cache.insert(job.url, proto);
@@ -272,7 +273,10 @@ impl App {
 
 fn fetch_bytes(agent: &ureq::Agent, src: &str, base_dir: Option<&Path>) -> Result<Vec<u8>> {
     if src.starts_with("http://") || src.starts_with("https://") {
-        let resp = agent.get(src).call().with_context(|| format!("GET {}", src))?;
+        let resp = agent
+            .get(src)
+            .call()
+            .with_context(|| format!("GET {}", src))?;
         let mut bytes = Vec::with_capacity(64 * 1024);
         resp.into_reader()
             .take(16 * 1024 * 1024)

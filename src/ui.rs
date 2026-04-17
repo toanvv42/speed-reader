@@ -69,11 +69,9 @@ fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
 
         let hint = kind_hint(c.kind);
         if !hint.is_empty() {
-            let hint_para = Paragraph::new(Line::from(Span::styled(
-                hint,
-                Style::default().fg(p.dim),
-            )))
-            .alignment(Alignment::Center);
+            let hint_para =
+                Paragraph::new(Line::from(Span::styled(hint, Style::default().fg(p.dim))))
+                    .alignment(Alignment::Center);
             f.render_widget(hint_para, inner[2]);
         }
     }
@@ -106,13 +104,7 @@ fn draw_empty_body(f: &mut Frame, body: Rect, p: &Palette) {
     f.render_widget(empty, inner[1]);
 }
 
-fn draw_image_body(
-    f: &mut Frame,
-    app: &mut App,
-    body: Rect,
-    url: Option<String>,
-    p: &Palette,
-) {
+fn draw_image_body(f: &mut Frame, app: &mut App, body: Rect, url: Option<String>, p: &Palette) {
     let rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(3), Constraint::Length(2)])
@@ -210,8 +202,8 @@ fn render_status(app: &App, p: &Palette) -> Paragraph<'static> {
 }
 
 fn draw_picker(f: &mut Frame, app: &App, area: Rect, p: &Palette) {
-    let w = (area.width.saturating_sub(6)).min(72).max(30);
-    let h = (area.height.saturating_sub(4)).min(22).max(10);
+    let w = (area.width.saturating_sub(6)).clamp(30, 72);
+    let h = (area.height.saturating_sub(4)).clamp(10, 22);
     let x = area.width.saturating_sub(w) / 2;
     let y = area.height.saturating_sub(h) / 2;
     let rect = Rect::new(x, y, w, h);
@@ -242,8 +234,7 @@ fn draw_picker(f: &mut Frame, app: &App, area: Rect, p: &Palette) {
         ])
         .split(inner);
 
-    let query =
-        Paragraph::new(format!("› {}_", app.picker.query)).style(Style::default().fg(p.fg));
+    let query = Paragraph::new(format!("› {}_", app.picker.query)).style(Style::default().fg(p.fg));
     f.render_widget(query, rows[0]);
 
     let divider =
@@ -322,4 +313,3 @@ fn draw_help(f: &mut Frame, area: Rect, p: &Palette) {
         .wrap(Wrap { trim: false });
     f.render_widget(para, rect);
 }
-

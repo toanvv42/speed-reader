@@ -3,6 +3,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum Block {
     Text(String),
     #[allow(dead_code)] // u8 level used in PR 2 for heading-size scaling
@@ -116,4 +117,71 @@ fn flush_paragraph(blocks: &mut Vec<Block>, buf: &mut String) {
         blocks.push(Block::Text(s.to_string()));
     }
     buf.clear();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn plain_paragraph_becomes_text_block() {
+        let blocks = parse_markdown("hello world");
+        assert_eq!(blocks, vec![Block::Text("hello world".into())]);
+    }
+
+    #[test]
+    fn heading_captures_level_and_text() {
+        let blocks = parse_markdown("## Section title");
+        assert_eq!(blocks, vec![Block::Heading(2, "Section title".into())]);
+    }
+
+    #[test]
+    fn fenced_code_block_captured_as_code() {
+        let md = "```\nlet x = 1;\nlet y = 2;\n```";
+        let blocks = parse_markdown(md);
+        assert_eq!(blocks, vec![Block::Code("let x = 1;\nlet y = 2;".into())]);
+    }
+
+    #[test]
+    fn image_becomes_image_block_with_url() {
+        let blocks = parse_markdown("![alt](https://example.com/a.png)");
+        assert_eq!(
+            blocks,
+            vec![Block::Image("https://example.com/a.png".into())]
+        );
+    }
+
+    #[test]
+    fn mixed_document_preserves_block_order() {
+        let md = "# Title\n\nfirst para\n\n```\ncode\n```\n\n![](img.png)\n\nlast para";
+        let blocks = parse_markdown(md);
+        assert_eq!(
+            blocks,
+            vec![
+                Block::Heading(1, "Title".into()),
+                Block::Text("first para".into()),
+                Block::Code("code".into()),
+                Block::Image("img.png".into()),
+                Block::Text("last para".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn image_alt_text_does_not_leak_into_text_block() {
+        let blocks = parse_markdown("![do not include me](x.png)");
+        assert_eq!(blocks, vec![Block::Image("x.png".into())]);
+    }
+
+    #[test]
+    fn soft_break_joins_lines_with_space() {
+        let blocks = parse_markdown("line one\nline two");
+        assert_eq!(blocks, vec![Block::Text("line one line two".into())]);
+    }
+
+    #[test]
+    fn empty_input_produces_no_blocks() {
+        assert!(parse_markdown("").is_empty());
+        assert!(parse_markdown("   \n\n  ").is_empty());
+    }
 }

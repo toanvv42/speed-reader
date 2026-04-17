@@ -32,9 +32,7 @@ fn map_reading(k: KeyEvent) -> Option<Action> {
         (KeyCode::Char(' '), _) => Some(Action::TogglePlay),
         (KeyCode::Right, _) | (KeyCode::Char('l'), false) => Some(Action::NextWord),
         (KeyCode::Left, _) | (KeyCode::Char('h'), false) => Some(Action::PrevWord),
-        (KeyCode::Up, _) | (KeyCode::Char('+'), _) | (KeyCode::Char('='), _) => {
-            Some(Action::WpmUp)
-        }
+        (KeyCode::Up, _) | (KeyCode::Char('+'), _) | (KeyCode::Char('='), _) => Some(Action::WpmUp),
         (KeyCode::Down, _) | (KeyCode::Char('-'), _) => Some(Action::WpmDown),
         (KeyCode::Char('o'), _) => Some(Action::OpenPicker),
         (KeyCode::Char('t'), false) => Some(Action::CycleTheme),
