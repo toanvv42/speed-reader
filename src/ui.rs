@@ -10,6 +10,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::app::{App, Mode};
 use crate::reader::{Chunk, ChunkKind};
+use crate::text::truncate_start;
 use crate::theme::Palette;
 
 pub fn draw(f: &mut Frame, app: &mut App) {
@@ -133,7 +134,7 @@ fn draw_image_body(
             let caption = Line::from(vec![
                 Span::styled("image: ", Style::default().fg(p.dim)),
                 Span::styled(
-                    truncate(&url, caption_area.width as usize).to_string(),
+                    truncate_start(&url, caption_area.width as usize).to_string(),
                     Style::default().fg(p.fg),
                 ),
             ]);
@@ -145,8 +146,13 @@ fn draw_image_body(
             f.render_widget(para, caption_area);
         }
         None => {
+            let (label, label_style) = if app.pending_image_urls.contains(&url) {
+                ("[loading image…] ", Style::default().fg(p.dim))
+            } else {
+                ("[image failed to load] ", Style::default().fg(p.accent))
+            };
             let msg = Paragraph::new(Line::from(vec![
-                Span::styled("[image failed to load] ", Style::default().fg(p.accent)),
+                Span::styled(label, label_style),
                 Span::styled(url.clone(), Style::default().fg(p.dim)),
             ]))
             .alignment(Alignment::Center);
@@ -214,7 +220,7 @@ fn draw_picker(f: &mut Frame, app: &App, area: Rect, p: &Palette) {
 
     let title = format!(
         " Open file — {} ",
-        truncate(
+        truncate_start(
             &app.picker.cwd.display().to_string(),
             (w as usize).saturating_sub(12),
         )
@@ -317,16 +323,3 @@ fn draw_help(f: &mut Frame, area: Rect, p: &Palette) {
     f.render_widget(para, rect);
 }
 
-fn truncate(s: &str, max: usize) -> String {
-    if max == 0 {
-        return String::new();
-    }
-    if s.chars().count() <= max {
-        s.to_string()
-    } else {
-        let head_len = max.saturating_sub(1);
-        let skip = s.chars().count() - head_len;
-        let tail: String = s.chars().skip(skip).collect();
-        format!("…{}", tail)
-    }
-}

@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result};
@@ -10,6 +11,11 @@ use ratatui_image::protocol::StatefulProtocol;
 use crate::doc::Block;
 use crate::reader::Reader;
 use crate::theme::{Theme, ThemeChoice};
+
+struct ImageJob {
+    url: String,
+    bytes: Result<Vec<u8>>,
+}
 
 pub enum Action {
     Quit,
@@ -47,6 +53,11 @@ pub struct App {
     pub status_msg: Option<String>,
     image_picker: ImagePicker,
     pub image_cache: HashMap<String, StatefulProtocol>,
+    pub pending_image_urls: HashSet<String>,
+    failed_count: usize,
+    http_agent: ureq::Agent,
+    image_tx: mpsc::Sender<ImageJob>,
+    image_rx: mpsc::Receiver<ImageJob>,
     pub theme_choice: ThemeChoice,
     pub theme: Theme,
 }
@@ -61,6 +72,10 @@ pub struct FilePicker {
 
 impl App {
     pub fn new(image_picker: ImagePicker, theme_choice: ThemeChoice, theme: Theme) -> Self {
+        let http_agent = ureq::AgentBuilder::new()
+            .timeout(Duration::from_secs(15))
+            .build();
+        let (image_tx, image_rx) = mpsc::channel();
         Self {
             should_quit: false,
             mode: Mode::Reading,
@@ -72,6 +87,11 @@ impl App {
             status_msg: None,
             image_picker,
             image_cache: HashMap::new(),
+            pending_image_urls: HashSet::new(),
+            failed_count: 0,
+            http_agent,
+            image_tx,
+            image_rx,
             theme_choice,
             theme,
         }
@@ -82,18 +102,24 @@ impl App {
         let base_dir = path.parent().map(|p| p.to_path_buf());
 
         self.image_cache.clear();
-        let mut failed = 0usize;
+        self.pending_image_urls.clear();
+        self.failed_count = 0;
+
+        let mut seen: HashSet<String> = HashSet::new();
         for block in &blocks {
             if let Block::Image(url) = block {
-                if self.image_cache.contains_key(url) {
+                if !seen.insert(url.clone()) {
                     continue;
                 }
-                match load_image(&mut self.image_picker, url, base_dir.as_deref()) {
-                    Ok(proto) => {
-                        self.image_cache.insert(url.clone(), proto);
-                    }
-                    Err(_) => failed += 1,
-                }
+                self.pending_image_urls.insert(url.clone());
+                let tx = self.image_tx.clone();
+                let agent = self.http_agent.clone();
+                let base = base_dir.clone();
+                let url_s = url.clone();
+                std::thread::spawn(move || {
+                    let bytes = fetch_bytes(&agent, &url_s, base.as_deref());
+                    let _ = tx.send(ImageJob { url: url_s, bytes });
+                });
             }
         }
 
@@ -101,23 +127,57 @@ impl App {
         self.file_path = Some(path.to_path_buf());
         self.mode = Mode::Reading;
         self.last_tick = Instant::now();
-        self.status_msg = if failed > 0 {
+        self.update_image_status();
+        Ok(())
+    }
+
+    pub fn pump_images(&mut self) {
+        let mut updated = false;
+        while let Ok(job) = self.image_rx.try_recv() {
+            self.pending_image_urls.remove(&job.url);
+            updated = true;
+            match job.bytes.and_then(|b| {
+                image::load_from_memory(&b).context("failed to decode image")
+            }) {
+                Ok(img) => {
+                    let proto = self.image_picker.new_resize_protocol(img);
+                    self.image_cache.insert(job.url, proto);
+                }
+                Err(_) => self.failed_count += 1,
+            }
+        }
+        if updated {
+            self.update_image_status();
+        }
+    }
+
+    fn update_image_status(&mut self) {
+        let pending = self.pending_image_urls.len();
+        let failed = self.failed_count;
+        self.status_msg = if pending > 0 {
+            Some(format!("loading {} image(s)…", pending))
+        } else if failed > 0 {
             Some(format!("{} image(s) failed to load", failed))
         } else {
             None
         };
-        Ok(())
     }
 
     pub fn tick_timeout(&self) -> Duration {
+        let idle = if !self.pending_image_urls.is_empty() {
+            Duration::from_millis(50)
+        } else {
+            Duration::from_millis(250)
+        };
         if self.mode != Mode::Reading || !self.reader.playing {
-            return Duration::from_millis(250);
+            return idle;
         }
         let per_chunk = self.reader.chunk_duration(self.wpm);
         let elapsed = self.last_tick.elapsed();
         per_chunk
             .saturating_sub(elapsed)
             .max(Duration::from_millis(5))
+            .min(idle)
     }
 
     pub fn tick(&mut self) {
@@ -210,21 +270,8 @@ impl App {
     }
 }
 
-fn load_image(
-    picker: &mut ImagePicker,
-    src: &str,
-    base_dir: Option<&Path>,
-) -> Result<StatefulProtocol> {
-    let bytes = fetch_bytes(src, base_dir)?;
-    let img = image::load_from_memory(&bytes).context("failed to decode image")?;
-    Ok(picker.new_resize_protocol(img))
-}
-
-fn fetch_bytes(src: &str, base_dir: Option<&Path>) -> Result<Vec<u8>> {
+fn fetch_bytes(agent: &ureq::Agent, src: &str, base_dir: Option<&Path>) -> Result<Vec<u8>> {
     if src.starts_with("http://") || src.starts_with("https://") {
-        let agent = ureq::AgentBuilder::new()
-            .timeout(Duration::from_secs(15))
-            .build();
         let resp = agent.get(src).call().with_context(|| format!("GET {}", src))?;
         let mut bytes = Vec::with_capacity(64 * 1024);
         resp.into_reader()
