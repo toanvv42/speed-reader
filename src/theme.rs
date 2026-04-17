@@ -1,6 +1,7 @@
+use clap::ValueEnum;
 use ratatui::style::Color;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, ValueEnum)]
 pub enum ThemeChoice {
     Dark,
     Light,

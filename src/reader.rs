@@ -3,6 +3,7 @@ use std::time::Duration;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::doc::Block;
+use crate::text::truncate_end;
 
 pub struct Chunk {
     pub text: String,
@@ -92,7 +93,7 @@ fn tokenize(blocks: &[Block]) -> Vec<Chunk> {
             Block::Heading(_, s) => tokenize_text(&mut out, s, ChunkKind::Heading, 1.3),
             Block::Code(s) => tokenize_text(&mut out, s, ChunkKind::Code, 1.2),
             Block::Image(url) => out.push(Chunk {
-                text: truncate(url, 60),
+                text: truncate_end(url, 60),
                 kind: ChunkKind::Image,
                 multiplier: 3.0,
                 orp: 0,
@@ -136,11 +137,3 @@ pub fn orp_index(word: &str) -> usize {
     }
 }
 
-fn truncate(s: &str, max: usize) -> String {
-    if s.chars().count() <= max {
-        s.to_string()
-    } else {
-        let t: String = s.chars().take(max).collect();
-        format!("{}…", t)
-    }
-}

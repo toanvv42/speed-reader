@@ -2,7 +2,7 @@ use std::io::stdout;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
@@ -15,6 +15,7 @@ mod app;
 mod doc;
 mod input;
 mod reader;
+mod text;
 mod theme;
 mod ui;
 
@@ -28,25 +29,8 @@ struct Cli {
     path: Option<PathBuf>,
 
     /// Color theme. `system` queries the terminal background (OSC 11).
-    #[arg(long, value_enum, default_value_t = CliTheme::System)]
-    theme: CliTheme,
-}
-
-#[derive(Copy, Clone, ValueEnum)]
-enum CliTheme {
-    Dark,
-    Light,
-    System,
-}
-
-impl From<CliTheme> for ThemeChoice {
-    fn from(t: CliTheme) -> Self {
-        match t {
-            CliTheme::Dark => ThemeChoice::Dark,
-            CliTheme::Light => ThemeChoice::Light,
-            CliTheme::System => ThemeChoice::System,
-        }
-    }
+    #[arg(long, value_enum, default_value_t = ThemeChoice::System)]
+    theme: ThemeChoice,
 }
 
 fn main() -> Result<()> {
@@ -57,7 +41,7 @@ fn main() -> Result<()> {
     //   - background luma for the "system" theme (terminal-light via OSC 11)
     let image_picker =
         ImagePicker::from_query_stdio().unwrap_or_else(|_| ImagePicker::halfblocks());
-    let theme_choice: ThemeChoice = cli.theme.into();
+    let theme_choice = cli.theme;
     let theme = theme::resolve(theme_choice);
 
     enable_raw_mode()?;
@@ -91,6 +75,7 @@ where
     <B as Backend>::Error: Send + Sync + 'static,
 {
     while !app.should_quit {
+        app.pump_images();
         terminal.draw(|f| ui::draw(f, app))?;
 
         let timeout = app.tick_timeout();
