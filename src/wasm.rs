@@ -73,9 +73,7 @@ impl WebReader {
 
     #[wasm_bindgen(js_name = imageUrl)]
     pub fn image_url(&self) -> Option<String> {
-        self.inner
-            .current()
-            .and_then(|c| c.image_url.clone())
+        self.inner.current().and_then(|c| c.image_url.clone())
     }
 
     #[wasm_bindgen(js_name = chunkDurationMs)]

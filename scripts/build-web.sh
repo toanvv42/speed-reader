@@ -11,70 +11,58 @@ wasm-pack build --target web --release --out-dir "$PKG" "$ROOT"
 echo "==> Inlining WASM into single HTML file…"
 mkdir -p "$DIST"
 
-# Base64-encode the .wasm binary
-WASM_B64=$(base64 < "$PKG/speed_reader_bg.wasm" | tr -d '\n')
+# Base64-encode the .wasm binary into a temp file (too large for shell variables on Linux)
+WASM_B64_FILE=$(mktemp)
+base64 < "$PKG/speed_reader_bg.wasm" | tr -d '\n' > "$WASM_B64_FILE"
 
-# Read the glue JS
-GLUE_JS=$(cat "$PKG/speed_reader.js")
+# Patch the glue JS: replace the URL constructor with a data: URI
+# Use awk instead of sed to avoid "argument list too long" on Linux
+PATCHED_JS_FILE=$(mktemp)
+awk -v b64file="$WASM_B64_FILE" '
+  /new URL\(.*speed_reader_bg\.wasm.*import\.meta\.url\)/ {
+    # Read the base64 content from file
+    getline b64 < b64file
+    close(b64file)
+    gsub(/new URL\(.*speed_reader_bg\.wasm.*import\.meta\.url\)/, "\"data:application/wasm;base64," b64 "\"")
+  }
+  { print }
+' "$PKG/speed_reader.js" > "$PATCHED_JS_FILE"
 
-# Patch the glue JS: replace the fetch-based init with a data-URL init
-# The default init function fetches from a URL; we replace that URL with a data: URI
-PATCHED_JS=$(echo "$GLUE_JS" | sed "s|new URL('speed_reader_bg.wasm', import.meta.url)|'data:application/wasm;base64,${WASM_B64}'|")
+# Build the final single HTML file
+{
+  # Head + style
+  echo '<!DOCTYPE html>'
+  echo '<html lang="en">'
+  echo '<head>'
+  echo '<meta charset="utf-8">'
+  echo '<meta name="viewport" content="width=device-width, initial-scale=1">'
+  echo '<title>speed-reader</title>'
+  sed -n '/<style>/,/<\/style>/p' "$ROOT/web/index.html"
+  echo '</head>'
 
-# Read the HTML template
-HTML=$(cat "$ROOT/web/index.html")
+  # Body (everything between <body> and the first <script)
+  sed -n '/<body>/,/<script/p' "$ROOT/web/index.html" | sed '/<script/d'
 
-# Build the inlined script block
-INLINE_SCRIPT="<script type=\"module\">
-${PATCHED_JS}
+  # Inlined script: patched glue JS + app logic
+  echo '<script type="module">'
+  echo '// === Inlined wasm-bindgen glue (patched for data: URL) ==='
+  cat "$PATCHED_JS_FILE"
+  echo ''
+  echo 'await __wbg_init();'
+  echo '// WebReader is already available from the glue above'
+  echo ''
 
-await __wbg_init();
-const { WebReader } = await import('data:text/javascript,export { WebReader } from \"./this-is-unused\";');
-"
+  # App logic (after END_WASM_INLINE_MARKER to </script>)
+  sed -n '/END_WASM_INLINE_MARKER/,/<\/script>/p' "$ROOT/web/index.html" \
+    | sed '1d' \
+    | sed '/<\/script>/d'
 
-# Actually, we need a simpler approach: just inline everything into one script
-# The WebReader class is already defined in the glue JS, we just need to init + use it
-read -r -d '' INLINE_BLOCK << 'HEREDOC_END' || true
-// BEGIN INLINED WASM MODULE
-HEREDOC_END
+  echo '</script>'
+  echo '</body></html>'
+} > "$DIST/index.html"
 
-# Simpler approach: build the complete self-contained script
-cat > "$DIST/index.html" << 'HTML_HEAD'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>speed-reader</title>
-HTML_HEAD
-
-# Extract style from template
-sed -n '/<style>/,/<\/style>/p' "$ROOT/web/index.html" >> "$DIST/index.html"
-
-echo '</head>' >> "$DIST/index.html"
-
-# Extract body (without scripts)
-sed -n '/<body>/,/<script/p' "$ROOT/web/index.html" | sed '/<script/d' >> "$DIST/index.html"
-
-# Write the inlined script
-cat >> "$DIST/index.html" << SCRIPT_START
-<script type="module">
-// === Inlined wasm-bindgen glue (patched for data: URL) ===
-${PATCHED_JS}
-
-await __wbg_init();
-// WebReader is already available from the glue above
-
-SCRIPT_START
-
-# Extract the app logic (after WASM_INLINE_MARKER to END_WASM_INLINE_MARKER)
-sed -n '/END_WASM_INLINE_MARKER/,/<\/script>/p' "$ROOT/web/index.html" \
-  | sed '1d' \
-  | sed '/<\/script>/d' \
-  >> "$DIST/index.html"
-
-echo '</script>' >> "$DIST/index.html"
-echo '</body></html>' >> "$DIST/index.html"
+# Cleanup temp files
+rm -f "$WASM_B64_FILE" "$PATCHED_JS_FILE"
 
 SIZE=$(wc -c < "$DIST/index.html" | tr -d ' ')
 SIZE_KB=$((SIZE / 1024))
