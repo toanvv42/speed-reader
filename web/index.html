@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>speed-reader — a quiet reading instrument</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Noto+Serif:ital,wght@0,400;0,500;1,400&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap');
 
 /* ─────────── Tokens ─────────── */
 :root {
@@ -25,6 +25,8 @@
 
   --serif: 'Fraunces', 'Libre Baskerville', 'Iowan Old Style', 'Palatino', Georgia, serif;
   --sans:  'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Reader typeface — user-adjustable, persisted to localStorage. */
+  --reading-font: 'Fraunces', 'Libre Baskerville', Georgia, serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -131,7 +133,7 @@ body::before {
 body.rsvp .rail { opacity: 0.55; }
 
 #word {
-  font-family: var(--serif);
+  font-family: var(--reading-font);
   font-optical-sizing: auto;
   font-size: clamp(2.8rem, 9vw, 6rem);
   font-weight: 500;
@@ -288,6 +290,121 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   font-style: italic;
   color: var(--ink-dim);
   margin-left: 0.15rem;
+}
+
+/* ─────────── Font picker (popover) ─────────── */
+.font-picker {
+  position: relative;
+  display: inline-block;
+}
+#btn-font {
+  min-width: 2.1rem;
+  padding: 0.45rem 0.6rem !important;
+  font-family: var(--reading-font);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+#btn-font.open {
+  background: var(--paper-deep);
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+#font-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  min-width: 300px;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 6px var(--paper-deep),
+    var(--shadow-lg);
+  padding: 0.5rem;
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transform-origin: bottom right;
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+  max-height: min(520px, 70vh);
+  overflow-y: auto;
+}
+#font-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.font-menu-heading {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding: 0.7rem 0.75rem 0.3rem;
+}
+.font-menu-heading:first-child { padding-top: 0.3rem; }
+.font-option {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch !important;
+  justify-content: center !important;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem !important;
+  min-width: 0;
+  height: auto !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink);
+  transition: background-color 140ms ease;
+  position: relative;
+}
+.font-option:hover { background: var(--paper-deep); }
+.font-option.active { background: rgba(184, 69, 30, 0.05); }
+.font-option.active::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.font-option .fo-name {
+  font-size: 1.05rem;
+  line-height: 1.15;
+  color: var(--ink);
+  text-align: left;
+}
+.font-option .fo-meta {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+.font-option .fo-sample {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-top: 0.1rem;
+  text-align: left;
+}
+.font-menu-footer {
+  border-top: 1px solid var(--rule);
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.75rem 0.2rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.72rem;
+  color: var(--ink-dim);
 }
 
 /* ─────────── Landing overlay ─────────── */
@@ -502,7 +619,7 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   border-left: 2px solid var(--rule-strong);
   border-radius: 0 4px 4px 0;
   padding: 0.85rem 0.9rem 0.85rem 1.1rem;
-  font-family: var(--serif);
+  font-family: var(--reading-font);
   font-size: 1rem;
   line-height: 1.6rem;   /* matches ruled line gradient */
   resize: vertical;
@@ -605,6 +722,42 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   padding: 0.6rem 0.8rem;
   border-radius: 0 4px 4px 0;
   display: none;
+}
+
+/* Privacy note — reassures users their text stays local */
+.privacy-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.02em;
+  padding: 0.35rem 0.55rem 0.35rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  width: fit-content;
+}
+.privacy-note svg {
+  width: 13px;
+  height: 13px;
+  stroke: var(--ink-soft);
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.privacy-note strong {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.privacy-note em {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-dim);
+  font-weight: 400;
 }
 
 /* Meta row (below card) */
@@ -785,6 +938,10 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
 
   <span class="divider"></span>
 
+  <span class="font-picker">
+    <button id="btn-font" title="Choose reading font (f)" aria-label="Choose reading font" aria-haspopup="true" aria-expanded="false">Aa</button>
+    <div id="font-menu" role="menu" aria-label="Reading fonts"></div>
+  </span>
   <button id="btn-theme" title="Cycle theme (t)" aria-label="Cycle theme">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.5 5.5 0 0 1 12 3z"/></svg>
   </button>
@@ -920,6 +1077,10 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
         </div>
         <p id="drop-hint">Drag &amp; drop a <kbd>.md</kbd> <kbd>.txt</kbd> <kbd>.docx</kbd> anywhere on this page.</p>
         <p id="load-error"></p>
+        <span class="privacy-note" title="All parsing runs locally in your browser via WebAssembly.">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span><strong>Private by design.</strong> <em>Your text never leaves this browser.</em></span>
+        </span>
       </div>
 
       <div class="meta">
@@ -945,6 +1106,7 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
     <dt><kbd>←</kbd> <kbd>→</kbd> / <kbd>h</kbd> <kbd>l</kbd></dt><dd>step by one word</dd>
     <dt><kbd>↑</kbd> <kbd>↓</kbd> / <kbd>+</kbd> <kbd>−</kbd></dt><dd>adjust reading pace by 25 wpm</dd>
     <dt><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd>open a file or paste text</dd>
+    <dt><kbd>f</kbd></dt><dd>choose a reading font — saved to this browser</dd>
     <dt><kbd>t</kbd></dt><dd>cycle through paper, ink, and system themes</dd>
     <dt><kbd>?</kbd></dt><dd>show or hide this card</dd>
   </dl>
@@ -961,8 +1123,26 @@ let reader = null;
 let wpm = 300;
 let imagePauseMs = 3000;
 let timer = null;
-const themes = ['system', 'dark', 'light'];
+const themes = ['light', 'dark', 'system'];
 let themeIdx = 0;
+
+// ─── Persistence (everything stays on-device) ───
+const LS_KEY = { font: 'sr.font', wpm: 'sr.wpm', theme: 'sr.themeIdx' };
+const lsGet = (k, fallback) => { try { const v = localStorage.getItem(k); return v === null ? fallback : v; } catch { return fallback; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
+
+// ─── Reader fonts (curated for English + Tiếng Việt) ───
+const FONTS = [
+  { key: 'fraunces',   name: 'Fraunces',               stack: "'Fraunces', Georgia, serif",                       group: 'Serif · English & Tiếng Việt', note: 'Expressive, literary' },
+  { key: 'literata',   name: 'Literata',               stack: "'Literata', Georgia, serif",                       group: 'Serif · English & Tiếng Việt', note: 'Designed for Google Books' },
+  { key: 'lora',       name: 'Lora',                   stack: "'Lora', Georgia, serif",                           group: 'Serif · English & Tiếng Việt', note: 'Calligraphic warmth' },
+  { key: 'notoserif',  name: 'Noto Serif',             stack: "'Noto Serif', 'Times New Roman', serif",            group: 'Serif · Excellent Tiếng Việt', note: 'Neutral, wide coverage' },
+  { key: 'atkinson',   name: 'Atkinson Hyperlegible',  stack: "'Atkinson Hyperlegible', system-ui, sans-serif",    group: 'Sans · Built for legibility',  note: 'Kind to tired eyes' },
+  { key: 'bevn',       name: 'Be Vietnam Pro',         stack: "'Be Vietnam Pro', system-ui, sans-serif",           group: 'Sans · Native Tiếng Việt',     note: 'Designed in Vietnam' },
+  { key: 'instrument', name: 'Instrument Sans',        stack: "'Instrument Sans', system-ui, sans-serif",          group: 'Sans · Modern',                note: 'Refined UI sans' },
+  { key: 'jbmono',     name: 'JetBrains Mono',         stack: "'JetBrains Mono', ui-monospace, monospace",         group: 'Mono · Code',                  note: 'For code-heavy text' },
+];
+const DEFAULT_FONT_KEY = 'fraunces';
 
 const $word = document.getElementById('word');
 const $hint = document.getElementById('kind-hint');
@@ -1155,15 +1335,14 @@ document.getElementById('btn-prev').addEventListener('click', () => {
   render();
 });
 
-document.getElementById('btn-wpm-up').addEventListener('click', () => {
-  wpm = Math.min(wpm + 25, 1500);
+function setWpm(next) {
+  wpm = Math.max(50, Math.min(1500, next));
   $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
-});
+  lsSet(LS_KEY.wpm, wpm);
+}
 
-document.getElementById('btn-wpm-down').addEventListener('click', () => {
-  wpm = Math.max(wpm - 25, 50);
-  $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
-});
+document.getElementById('btn-wpm-up').addEventListener('click', () => setWpm(wpm + 25));
+document.getElementById('btn-wpm-down').addEventListener('click', () => setWpm(wpm - 25));
 
 document.getElementById('btn-open').addEventListener('click', () => {
   stopTimer();
@@ -1191,11 +1370,91 @@ document.getElementById('btn-close-help').addEventListener('click', () => {
   $help.close();
 });
 
-function cycleTheme() {
-  themeIdx = (themeIdx + 1) % themes.length;
+function applyTheme() {
   const t = themes[themeIdx];
   if (t === 'system') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);
+}
+function cycleTheme() {
+  themeIdx = (themeIdx + 1) % themes.length;
+  applyTheme();
+  lsSet(LS_KEY.theme, themeIdx);
+}
+
+// ─── Font picker ───
+function applyFont(key) {
+  const f = FONTS.find(x => x.key === key) || FONTS[0];
+  document.documentElement.style.setProperty('--reading-font', f.stack);
+  const btn = document.getElementById('btn-font');
+  btn.style.fontFamily = f.stack;
+  document.querySelectorAll('.font-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.fontKey === f.key);
+  });
+  return f;
+}
+
+function buildFontMenu() {
+  const menu = document.getElementById('font-menu');
+  const groups = new Map();
+  for (const f of FONTS) {
+    if (!groups.has(f.group)) groups.set(f.group, []);
+    groups.get(f.group).push(f);
+  }
+  const parts = [];
+  for (const [group, items] of groups) {
+    parts.push(`<div class="font-menu-heading">${group}</div>`);
+    for (const f of items) {
+      parts.push(
+        `<button class="font-option" data-font-key="${f.key}" type="button" role="menuitem">`
+        + `<span class="fo-name" style="font-family: ${f.stack};">${f.name}</span>`
+        + `<span class="fo-meta">${f.note}</span>`
+        + `<span class="fo-sample" style="font-family: ${f.stack};">The quick brown fox · Tiếng Việt mến yêu</span>`
+        + `</button>`
+      );
+    }
+  }
+  parts.push(`<div class="font-menu-footer">Fonts load from Google Fonts. Your text never leaves this browser.</div>`);
+  menu.innerHTML = parts.join('');
+  menu.querySelectorAll('.font-option').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.fontKey;
+      applyFont(key);
+      lsSet(LS_KEY.font, key);
+      toggleFontMenu(false);
+    });
+  });
+}
+
+function toggleFontMenu(force) {
+  const btn = document.getElementById('btn-font');
+  const menu = document.getElementById('font-menu');
+  const open = typeof force === 'boolean' ? force : !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  btn.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', String(open));
+}
+
+document.getElementById('btn-font').addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleFontMenu();
+});
+document.addEventListener('click', (e) => {
+  const fp = document.querySelector('.font-picker');
+  if (fp && !fp.contains(e.target)) toggleFontMenu(false);
+});
+
+// ─── Restore persisted state ───
+buildFontMenu();
+applyFont(lsGet(LS_KEY.font, DEFAULT_FONT_KEY));
+
+const persistedWpm = parseInt(lsGet(LS_KEY.wpm, '300'), 10);
+if (!Number.isNaN(persistedWpm)) wpm = Math.max(50, Math.min(1500, persistedWpm));
+$wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
+
+const persistedTheme = parseInt(lsGet(LS_KEY.theme, '0'), 10);
+if (!Number.isNaN(persistedTheme) && persistedTheme >= 0 && persistedTheme < themes.length) {
+  themeIdx = persistedTheme;
+  applyTheme();
 }
 
 // --- Drag & drop (supports multi-file: doc + images) ---
@@ -1253,12 +1512,13 @@ document.addEventListener('keydown', e => {
       if (reader) { reader.setPlaying(false); stopTimer(); reader.retreat(); render(); }
       break;
     case 'ArrowUp': case '+': case '=':
-      wpm = Math.min(wpm + 25, 1500);
-      $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
+      setWpm(wpm + 25);
       break;
     case 'ArrowDown': case '-':
-      wpm = Math.max(wpm - 25, 50);
-      $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
+      setWpm(wpm - 25);
+      break;
+    case 'f':
+      toggleFontMenu();
       break;
     case 'o':
       if (!e.ctrlKey) { stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }

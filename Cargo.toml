@@ -1,6 +1,6 @@
 [package]
 name = "speed-reader"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 description = "RSVP speed reader for markdown — TUI, Ghostty-targeted"
 
