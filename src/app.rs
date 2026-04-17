@@ -60,6 +60,7 @@ pub struct App {
     image_rx: mpsc::Receiver<ImageJob>,
     pub theme_choice: ThemeChoice,
     pub theme: Theme,
+    pub image_pause: Duration,
 }
 
 pub struct FilePicker {
@@ -71,7 +72,12 @@ pub struct FilePicker {
 }
 
 impl App {
-    pub fn new(image_picker: ImagePicker, theme_choice: ThemeChoice, theme: Theme) -> Self {
+    pub fn new(
+        image_picker: ImagePicker,
+        theme_choice: ThemeChoice,
+        theme: Theme,
+        image_pause: Duration,
+    ) -> Self {
         let http_agent = ureq::AgentBuilder::new()
             .timeout(Duration::from_secs(15))
             .build();
@@ -94,6 +100,7 @@ impl App {
             image_rx,
             theme_choice,
             theme,
+            image_pause,
         }
     }
 
@@ -173,7 +180,7 @@ impl App {
         if self.mode != Mode::Reading || !self.reader.playing {
             return idle;
         }
-        let per_chunk = self.reader.chunk_duration(self.wpm);
+        let per_chunk = self.reader.chunk_duration(self.wpm, self.image_pause);
         let elapsed = self.last_tick.elapsed();
         per_chunk
             .saturating_sub(elapsed)
@@ -185,7 +192,7 @@ impl App {
         if self.mode != Mode::Reading || !self.reader.playing {
             return;
         }
-        let per_chunk = self.reader.chunk_duration(self.wpm);
+        let per_chunk = self.reader.chunk_duration(self.wpm, self.image_pause);
         if self.last_tick.elapsed() >= per_chunk {
             if self.reader.at_end() {
                 self.reader.playing = false;
