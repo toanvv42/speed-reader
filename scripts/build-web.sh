@@ -64,9 +64,9 @@ awk -v b64file="$WASM_B64_FILE" '
 # Cleanup temp files
 rm -f "$WASM_B64_FILE" "$PATCHED_JS_FILE"
 
-# GitHub Pages custom domain (tinywin.us). Without this file in the
-# uploaded artifact, each Pages deploy would clear the custom domain.
-echo 'tinywin.us' > "$DIST/CNAME"
+# GitHub Pages custom domain. Without this file in the uploaded
+# artifact, each Pages deploy would clear the custom domain.
+echo 'reader.tinywins.us' > "$DIST/CNAME"
 
 SIZE=$(wc -c < "$DIST/index.html" | tr -d ' ')
 SIZE_KB=$((SIZE / 1024))
