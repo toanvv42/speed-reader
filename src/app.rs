@@ -9,6 +9,7 @@ use ratatui_image::protocol::StatefulProtocol;
 
 use crate::doc::Block;
 use crate::reader::Reader;
+use crate::theme::{Theme, ThemeChoice};
 
 pub enum Action {
     Quit,
@@ -20,6 +21,7 @@ pub enum Action {
     OpenPicker,
     ClosePicker,
     ToggleHelp,
+    CycleTheme,
     PickerInput(char),
     PickerBackspace,
     PickerUp,
@@ -45,6 +47,8 @@ pub struct App {
     pub status_msg: Option<String>,
     image_picker: ImagePicker,
     pub image_cache: HashMap<String, StatefulProtocol>,
+    pub theme_choice: ThemeChoice,
+    pub theme: Theme,
 }
 
 pub struct FilePicker {
@@ -56,7 +60,7 @@ pub struct FilePicker {
 }
 
 impl App {
-    pub fn new(image_picker: ImagePicker) -> Self {
+    pub fn new(image_picker: ImagePicker, theme_choice: ThemeChoice, theme: Theme) -> Self {
         Self {
             should_quit: false,
             mode: Mode::Reading,
@@ -68,6 +72,8 @@ impl App {
             status_msg: None,
             image_picker,
             image_cache: HashMap::new(),
+            theme_choice,
+            theme,
         }
     }
 
@@ -167,6 +173,11 @@ impl App {
                     Mode::Help => Mode::Reading,
                     _ => Mode::Help,
                 };
+            }
+            Action::CycleTheme => {
+                self.theme_choice = self.theme_choice.cycle();
+                self.theme = crate::theme::resolve(self.theme_choice);
+                self.status_msg = Some(format!("theme: {}", self.theme_choice.label()));
             }
             Action::PickerInput(c) => {
                 self.picker.query.push(c);

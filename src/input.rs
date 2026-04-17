@@ -37,6 +37,7 @@ fn map_reading(k: KeyEvent) -> Option<Action> {
         }
         (KeyCode::Down, _) | (KeyCode::Char('-'), _) => Some(Action::WpmDown),
         (KeyCode::Char('o'), _) => Some(Action::OpenPicker),
+        (KeyCode::Char('t'), false) => Some(Action::CycleTheme),
         (KeyCode::Char('?'), _) => Some(Action::ToggleHelp),
         _ => None,
     }

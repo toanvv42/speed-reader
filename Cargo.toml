@@ -14,6 +14,7 @@ pulldown-cmark = { version = "0.12", default-features = false }
 unicode-segmentation = "1.12"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
+terminal-light = "1"
 
 [profile.release]
 lto = "thin"
