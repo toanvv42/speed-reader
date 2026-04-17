@@ -1,0 +1,316 @@
+use ratatui::{
+    Frame,
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
+};
+use ratatui_image::StatefulImage;
+use unicode_segmentation::UnicodeSegmentation;
+
+use crate::app::{App, Mode};
+use crate::reader::{Chunk, ChunkKind};
+
+const ACCENT: Color = Color::Rgb(255, 80, 80);
+const DIM: Color = Color::Rgb(140, 140, 140);
+const FG: Color = Color::Rgb(230, 230, 230);
+const STATUS_BG: Color = Color::Rgb(20, 20, 30);
+const MODAL_BG: Color = Color::Rgb(18, 18, 24);
+
+pub fn draw(f: &mut Frame, app: &mut App) {
+    let size = f.area();
+    draw_reader(f, app, size);
+
+    match app.mode {
+        Mode::Picker => draw_picker(f, app, size),
+        Mode::Help => draw_help(f, size),
+        Mode::Reading => {}
+    }
+}
+
+fn draw_reader(f: &mut Frame, app: &mut App, area: Rect) {
+    let rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(1)])
+        .split(area);
+
+    let body = rows[0];
+    let status = rows[1];
+
+    let current_kind = app.reader.current().map(|c| c.kind);
+    let current_url = app
+        .reader
+        .current()
+        .and_then(|c| c.image_url.clone());
+
+    match current_kind {
+        Some(ChunkKind::Image) => draw_image_body(f, app, body, current_url),
+        Some(_) => draw_text_body(f, app, body),
+        None => draw_empty_body(f, body),
+    }
+
+    f.render_widget(render_status(app), status);
+}
+
+fn draw_text_body(f: &mut Frame, app: &App, body: Rect) {
+    let inner = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(45),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Min(0),
+        ])
+        .split(body);
+
+    if let Some(c) = app.reader.current() {
+        let line = render_chunk(c);
+        let word = Paragraph::new(line).alignment(Alignment::Center);
+        f.render_widget(word, inner[1]);
+
+        let hint = kind_hint(c.kind);
+        if !hint.is_empty() {
+            let hint_para =
+                Paragraph::new(Line::from(Span::styled(hint, Style::default().fg(DIM))))
+                    .alignment(Alignment::Center);
+            f.render_widget(hint_para, inner[2]);
+        }
+    }
+}
+
+fn draw_empty_body(f: &mut Frame, body: Rect) {
+    let inner = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(45),
+            Constraint::Length(1),
+            Constraint::Min(0),
+        ])
+        .split(body);
+
+    let empty = Paragraph::new(Line::from(vec![
+        Span::styled("press ", Style::default().fg(DIM)),
+        Span::styled("Ctrl+O", Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)),
+        Span::styled(" or ", Style::default().fg(DIM)),
+        Span::styled("o", Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)),
+        Span::styled(" to open a file", Style::default().fg(DIM)),
+    ]))
+    .alignment(Alignment::Center);
+    f.render_widget(empty, inner[1]);
+}
+
+fn draw_image_body(f: &mut Frame, app: &mut App, body: Rect, url: Option<String>) {
+    // reserve a small caption row at the bottom; rest is the image
+    let rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(3), Constraint::Length(2)])
+        .split(body);
+
+    let image_area = rows[0];
+    let caption_area = rows[1];
+
+    let url = match url {
+        Some(u) => u,
+        None => return,
+    };
+
+    match app.image_cache.get_mut(&url) {
+        Some(proto) => {
+            let widget = StatefulImage::default();
+            f.render_stateful_widget(widget, image_area, proto);
+
+            let caption = Line::from(vec![
+                Span::styled("image: ", Style::default().fg(DIM)),
+                Span::styled(truncate(&url, caption_area.width as usize).to_string(), Style::default().fg(FG)),
+            ]);
+            let hint = Line::from(Span::styled(
+                "Space to continue · ← → to step",
+                Style::default().fg(DIM),
+            ));
+            let p = Paragraph::new(vec![caption, hint]).alignment(Alignment::Center);
+            f.render_widget(p, caption_area);
+        }
+        None => {
+            let msg = Paragraph::new(Line::from(vec![
+                Span::styled("[image failed to load] ", Style::default().fg(ACCENT)),
+                Span::styled(url.clone(), Style::default().fg(DIM)),
+            ]))
+            .alignment(Alignment::Center);
+            f.render_widget(msg, image_area);
+        }
+    }
+}
+
+fn render_chunk(c: &Chunk) -> Line<'static> {
+    if c.kind == ChunkKind::Paragraph {
+        return Line::from(Span::styled("¶", Style::default().fg(DIM)));
+    }
+    let graphemes: Vec<&str> = c.text.graphemes(true).collect();
+    let mut spans: Vec<Span<'static>> = Vec::with_capacity(graphemes.len());
+    for (i, g) in graphemes.iter().enumerate() {
+        let style = if i == c.orp {
+            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(FG)
+        };
+        spans.push(Span::styled((*g).to_string(), style));
+    }
+    Line::from(spans)
+}
+
+fn kind_hint(k: ChunkKind) -> &'static str {
+    match k {
+        ChunkKind::Heading => "— heading —",
+        ChunkKind::Code => "— code —",
+        _ => "",
+    }
+}
+
+fn render_status(app: &App) -> Paragraph<'static> {
+    let total = app.reader.chunks.len();
+    let idx = if total == 0 { 0 } else { app.reader.index + 1 };
+    let play = if app.reader.playing { "▶" } else { "⏸" };
+    let file = app
+        .file_path
+        .as_ref()
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("—")
+        .to_string();
+    let msg = app.status_msg.clone().unwrap_or_default();
+    let text = if msg.is_empty() {
+        format!(
+            " {}  {}  {} wpm  {}/{}   ?help  Ctrl+O open  q quit ",
+            play, file, app.wpm, idx, total
+        )
+    } else {
+        format!(" {}  {}   [{}] ", play, file, msg)
+    };
+    Paragraph::new(text).style(Style::default().fg(DIM).bg(STATUS_BG))
+}
+
+fn draw_picker(f: &mut Frame, app: &App, area: Rect) {
+    let w = (area.width.saturating_sub(6)).min(72).max(30);
+    let h = (area.height.saturating_sub(4)).min(22).max(10);
+    let x = area.width.saturating_sub(w) / 2;
+    let y = area.height.saturating_sub(h) / 2;
+    let rect = Rect::new(x, y, w, h);
+
+    f.render_widget(Clear, rect);
+
+    let title = format!(
+        " Open file — {} ",
+        truncate(
+            &app.picker.cwd.display().to_string(),
+            (w as usize).saturating_sub(12),
+        )
+    );
+    let block = Block::default()
+        .title(title)
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(ACCENT))
+        .style(Style::default().bg(MODAL_BG));
+    let inner = block.inner(rect);
+    f.render_widget(block, rect);
+
+    let rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Min(1),
+        ])
+        .split(inner);
+
+    let query = Paragraph::new(format!("› {}_", app.picker.query)).style(Style::default().fg(FG));
+    f.render_widget(query, rows[0]);
+
+    let divider = Paragraph::new("─".repeat(inner.width as usize))
+        .style(Style::default().fg(Color::Rgb(60, 60, 80)));
+    f.render_widget(divider, rows[1]);
+
+    let items: Vec<ListItem> = app
+        .picker
+        .filtered
+        .iter()
+        .map(|&i| {
+            let p = &app.picker.entries[i];
+            let name = if app.picker.is_parent(p) {
+                "..".to_string()
+            } else {
+                p.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("?")
+                    .to_string()
+            };
+            let display = if p.is_dir() {
+                format!("{}/", name)
+            } else {
+                name
+            };
+            ListItem::new(display)
+        })
+        .collect();
+
+    let list = List::new(items)
+        .highlight_style(
+            Style::default()
+                .bg(Color::Rgb(40, 40, 60))
+                .fg(ACCENT)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol("› ");
+
+    let mut state = ListState::default();
+    if !app.picker.filtered.is_empty() {
+        state.select(Some(app.picker.selected));
+    }
+    f.render_stateful_widget(list, rows[2], &mut state);
+}
+
+fn draw_help(f: &mut Frame, area: Rect) {
+    let w = 52u16.min(area.width.saturating_sub(4)).max(30);
+    let h = 14u16.min(area.height.saturating_sub(2)).max(10);
+    let x = area.width.saturating_sub(w) / 2;
+    let y = area.height.saturating_sub(h) / 2;
+    let rect = Rect::new(x, y, w, h);
+
+    f.render_widget(Clear, rect);
+
+    let lines = vec![
+        Line::from("  Space      play / pause"),
+        Line::from("  ← → h l    step word"),
+        Line::from("  ↑ ↓ + -    WPM ±25"),
+        Line::from("  Ctrl+O o   open file"),
+        Line::from("  ?          toggle this help"),
+        Line::from("  q / Esc    quit"),
+        Line::from(""),
+        Line::from("  on image   Space / → to continue"),
+        Line::from("  (picker)   ↑↓ move · Enter open · Esc cancel"),
+    ];
+
+    let block = Block::default()
+        .title(" speed-reader — help ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(ACCENT))
+        .style(Style::default().bg(MODAL_BG));
+    let p = Paragraph::new(lines)
+        .block(block)
+        .style(Style::default().fg(FG))
+        .wrap(Wrap { trim: false });
+    f.render_widget(p, rect);
+}
+
+fn truncate(s: &str, max: usize) -> String {
+    if max == 0 {
+        return String::new();
+    }
+    if s.chars().count() <= max {
+        s.to_string()
+    } else {
+        let head_len = max.saturating_sub(1);
+        let skip = s.chars().count() - head_len;
+        let tail: String = s.chars().skip(skip).collect();
+        format!("…{}", tail)
+    }
+}

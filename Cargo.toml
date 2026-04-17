@@ -1,0 +1,21 @@
+[package]
+name = "speed-reader"
+version = "0.1.0"
+edition = "2024"
+description = "RSVP speed reader for markdown — TUI, Ghostty-targeted"
+
+[dependencies]
+ratatui = "0.30"
+crossterm = "0.28"
+ratatui-image = { version = "10", default-features = false, features = ["crossterm"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
+ureq = "2"
+pulldown-cmark = { version = "0.12", default-features = false }
+unicode-segmentation = "1.12"
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
