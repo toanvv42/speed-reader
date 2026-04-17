@@ -91,3 +91,28 @@ pub fn detect_system() -> Theme {
         _ => Theme::Dark,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cycle_rotates_dark_light_system() {
+        assert_eq!(ThemeChoice::Dark.cycle(), ThemeChoice::Light);
+        assert_eq!(ThemeChoice::Light.cycle(), ThemeChoice::System);
+        assert_eq!(ThemeChoice::System.cycle(), ThemeChoice::Dark);
+    }
+
+    #[test]
+    fn label_matches_variant() {
+        assert_eq!(ThemeChoice::Dark.label(), "dark");
+        assert_eq!(ThemeChoice::Light.label(), "light");
+        assert_eq!(ThemeChoice::System.label(), "system");
+    }
+
+    #[test]
+    fn resolve_fixed_choices_bypass_detection() {
+        assert_eq!(resolve(ThemeChoice::Dark), Theme::Dark);
+        assert_eq!(resolve(ThemeChoice::Light), Theme::Light);
+    }
+}
