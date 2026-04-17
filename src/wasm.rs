@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::doc::parse_markdown;
+use crate::doc::{blocks_from_plain_text, parse_docx, parse_markdown};
 use crate::reader::{ChunkKind, Reader};
 
 #[wasm_bindgen]
@@ -16,6 +16,23 @@ impl WebReader {
         WebReader {
             inner: Reader::from_blocks(blocks),
         }
+    }
+
+    /// Build a reader from a plain-text source (no markdown syntax).
+    #[wasm_bindgen(js_name = fromText)]
+    pub fn from_text(text: &str) -> WebReader {
+        WebReader {
+            inner: Reader::from_blocks(blocks_from_plain_text(text)),
+        }
+    }
+
+    /// Build a reader from the raw bytes of a .docx file.
+    #[wasm_bindgen(js_name = fromDocx)]
+    pub fn from_docx(bytes: &[u8]) -> Result<WebReader, JsError> {
+        let blocks = parse_docx(bytes).map_err(|e| JsError::new(&e.to_string()))?;
+        Ok(WebReader {
+            inner: Reader::from_blocks(blocks),
+        })
     }
 
     pub fn advance(&mut self) {

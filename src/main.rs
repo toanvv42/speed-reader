@@ -20,9 +20,12 @@ use app::App;
 use speed_reader::theme::{self, ThemeChoice};
 
 #[derive(Parser)]
-#[command(name = "speed-reader", about = "RSVP speed reader for markdown files")]
+#[command(
+    name = "speed-reader",
+    about = "RSVP speed reader for markdown, text, docx, and pdf files"
+)]
 struct Cli {
-    /// Path to a markdown or text file to open
+    /// Path to the file to open (.md/.markdown/.mdx/.txt/.docx/.pdf)
     path: Option<PathBuf>,
 
     /// Color theme. `system` queries the terminal background (OSC 11).

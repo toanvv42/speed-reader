@@ -3,255 +3,950 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>speed-reader</title>
+<title>speed-reader — a quiet reading instrument</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:wght@400;500;600&display=swap');
+
+/* ─────────── Tokens ─────────── */
 :root {
-  --fg: #e6e6e6;
-  --bg: #101014;
-  --dim: #8c8c8c;
-  --accent: #ff5050;
-  --status-bg: #14141e;
-  --status-fg: #b4b4b4;
-  --modal-bg: #12121899;
-  --input-bg: #1a1a24;
-  --border: #3c3c50;
+  --paper:        #fbfaf8;
+  --paper-raised: #ffffff;
+  --paper-deep:   #f4f1ea;
+  --ink:          #1a1a1a;
+  --ink-soft:     #3a3632;
+  --ink-dim:      #8a847d;
+  --rule:         #e4dfd3;
+  --rule-strong:  #c9c0ab;
+  --accent:       #b8451e;   /* ORP — warm bookbinding red */
+  --accent-soft:  #d98761;
+  --shadow-sm:    0 1px 2px rgba(45, 37, 28, 0.04);
+  --shadow-md:    0 1px 2px rgba(45, 37, 28, 0.04), 0 8px 24px -6px rgba(45, 37, 28, 0.08);
+  --shadow-lg:    0 1px 2px rgba(45, 37, 28, 0.05), 0 20px 50px -12px rgba(45, 37, 28, 0.14);
+
+  --serif: 'Fraunces', 'Libre Baskerville', 'Iowan Old Style', 'Palatino', Georgia, serif;
+  --sans:  'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
-@media (prefers-color-scheme: light) {
+
+@media (prefers-color-scheme: dark) {
   :root {
-    --fg: #1e1e23;
-    --bg: #faf9f5;
-    --dim: #78787e;
-    --accent: #c82828;
-    --status-bg: #e8e6de;
-    --status-fg: #46464e;
-    --modal-bg: #faf9f5dd;
-    --input-bg: #fff;
-    --border: #c8c6be;
+    --paper:        #17150f;
+    --paper-raised: #1e1c16;
+    --paper-deep:   #13110c;
+    --ink:          #ece6d7;
+    --ink-soft:     #b8b0a0;
+    --ink-dim:      #6d6860;
+    --rule:         #2b271f;
+    --rule-strong:  #3a352c;
+    --accent:       #e68a62;
+    --accent-soft:  #b96a48;
+    --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md:    0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -6px rgba(0, 0, 0, 0.5);
+    --shadow-lg:    0 1px 2px rgba(0, 0, 0, 0.35), 0 24px 60px -12px rgba(0, 0, 0, 0.6);
   }
 }
-[data-theme="dark"] {
-  --fg: #e6e6e6;
-  --bg: #101014;
-  --dim: #8c8c8c;
-  --accent: #ff5050;
-  --status-bg: #14141e;
-  --status-fg: #b4b4b4;
-  --modal-bg: #12121899;
-  --input-bg: #1a1a24;
-  --border: #3c3c50;
-}
+
 [data-theme="light"] {
-  --fg: #1e1e23;
-  --bg: #faf9f5;
-  --dim: #78787e;
-  --accent: #c82828;
-  --status-bg: #e8e6de;
-  --status-fg: #46464e;
-  --modal-bg: #faf9f5dd;
-  --input-bg: #fff;
-  --border: #c8c6be;
+  --paper: #fbfaf8; --paper-raised: #ffffff; --paper-deep: #f4f1ea;
+  --ink: #1a1a1a; --ink-soft: #3a3632; --ink-dim: #8a847d;
+  --rule: #e4dfd3; --rule-strong: #c9c0ab;
+  --accent: #b8451e; --accent-soft: #d98761;
+  --shadow-sm: 0 1px 2px rgba(45, 37, 28, 0.04);
+  --shadow-md: 0 1px 2px rgba(45, 37, 28, 0.04), 0 8px 24px -6px rgba(45, 37, 28, 0.08);
+  --shadow-lg: 0 1px 2px rgba(45, 37, 28, 0.05), 0 20px 50px -12px rgba(45, 37, 28, 0.14);
 }
+
+[data-theme="dark"] {
+  --paper: #17150f; --paper-raised: #1e1c16; --paper-deep: #13110c;
+  --ink: #ece6d7; --ink-soft: #b8b0a0; --ink-dim: #6d6860;
+  --rule: #2b271f; --rule-strong: #3a352c;
+  --accent: #e68a62; --accent-soft: #b96a48;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.35), 0 24px 60px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* ─────────── Reset ─────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
-  height: 100vh;
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  user-select: none;
+  position: relative;
+  /* Subtle paper grain via CSS noise */
+  background-image:
+    radial-gradient(at 10% 10%, rgba(184, 69, 30, 0.025), transparent 40%),
+    radial-gradient(at 90% 85%, rgba(201, 192, 171, 0.08), transparent 45%);
 }
+
+/* Faint paper fiber texture (SVG noise, purely decorative) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
+}
+@media (prefers-color-scheme: dark) {
+  body::before { mix-blend-mode: screen; opacity: 0.22; }
+}
+[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: 0.22; }
+
+/* ─────────── Reader (RSVP) stage ─────────── */
 #reader {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1.4rem;
   min-height: 0;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
 }
+
+/* decorative fixed reading rails — only visible in RSVP mode */
+.rail {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 70vw);
+  height: 1px;
+  background: var(--rule);
+  opacity: 0;
+  transition: opacity 600ms ease 400ms;
+  z-index: 1;
+}
+.rail.top    { top: calc(50% - 8.5rem); }
+.rail.bottom { top: calc(50% + 8.5rem); }
+body.rsvp .rail { opacity: 0.55; }
+
 #word {
-  font-size: clamp(2rem, 8vw, 5rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: var(--serif);
+  font-optical-sizing: auto;
+  font-size: clamp(2.8rem, 9vw, 6rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
   white-space: nowrap;
+  color: var(--ink);
+  transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-#word .orp { color: var(--accent); }
+#word .orp {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 500;
+}
+#word .pilcrow {
+  color: var(--ink-dim);
+  font-size: 0.7em;
+}
+
 #kind-hint {
-  font-size: 0.85rem;
-  color: var(--dim);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.08em;
+  text-transform: none;
+  min-height: 1.4em;
 }
+
 #image-display {
   max-width: 80%;
   max-height: 60vh;
   object-fit: contain;
   display: none;
+  border-radius: 2px;
+  box-shadow: var(--shadow-lg);
 }
 #image-caption {
-  font-size: 0.8rem;
-  color: var(--dim);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--ink-dim);
   display: none;
   text-align: center;
 }
+
+/* ─────────── Cinematic transitions ─────────── */
+/* In RSVP mode: word floats up from nothing. Landing mode: word hidden. */
+body:not(.rsvp) #reader { opacity: 0; }
+body.rsvp #reader {
+  opacity: 1;
+  animation: word-enter 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes word-enter {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.98); filter: blur(3px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* ─────────── Progress hairline ─────────── */
+#progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--accent);
+  width: 0%;
+  transition: width 120ms linear, opacity 400ms ease 500ms;
+  opacity: 0;
+  z-index: 5;
+}
+body.rsvp #progress-bar { opacity: 0.85; }
+
+/* ─────────── Status bar (chrome) ─────────── */
 #status {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 0.4rem 1rem;
-  background: var(--status-bg);
-  color: var(--status-fg);
-  font-size: 0.8rem;
+  gap: 0.35rem;
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--rule);
+  transition: opacity 400ms ease 600ms, transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1) 600ms;
 }
-#status button {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--status-fg);
-  padding: 0.2rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-#status button:hover { color: var(--accent); border-color: var(--accent); }
-#wpm-display { min-width: 5ch; text-align: center; }
-#progress { min-width: 7ch; text-align: center; }
+body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events: none; }
 
-/* Input overlay */
+#status button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-soft);
+  padding: 0.45rem 0.55rem;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+#status button:hover {
+  background: var(--paper-deep);
+  border-color: var(--rule);
+  color: var(--ink);
+}
+#status button:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184, 69, 30, 0.12);
+}
+#status button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+#status .divider {
+  width: 1px;
+  height: 18px;
+  background: var(--rule);
+  margin: 0 0.35rem;
+}
+
+#btn-play {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+  border-color: var(--ink) !important;
+  min-width: 2.4rem;
+}
+#btn-play:hover {
+  background: var(--ink-soft) !important;
+  border-color: var(--ink-soft) !important;
+}
+#btn-play .icon-pause { display: none; }
+#btn-play.playing .icon-play { display: none; }
+#btn-play.playing .icon-pause { display: inline-block; }
+
+#wpm-display, #progress {
+  font-family: var(--serif);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  padding: 0 0.5rem;
+  min-width: 4.5ch;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+#wpm-display em, #progress em {
+  font-style: italic;
+  color: var(--ink-dim);
+  margin-left: 0.15rem;
+}
+
+/* ─────────── Landing overlay ─────────── */
 #input-overlay {
   position: fixed;
   inset: 0;
-  background: var(--modal-bg);
+  background: var(--paper);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
-  backdrop-filter: blur(4px);
+  overflow-y: auto;
+  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
+  background-image:
+    radial-gradient(at 8% 12%, rgba(184, 69, 30, 0.04), transparent 35%),
+    radial-gradient(at 92% 88%, rgba(201, 192, 171, 0.12), transparent 45%);
 }
-#input-overlay.hidden { display: none; }
-#input-box {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
-  width: min(90vw, 600px);
+#input-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.landing {
+  width: min(1180px, 100%);
+  padding: clamp(2rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: center;
+  position: relative;
+}
+@media (min-width: 880px) {
+  .landing { grid-template-columns: minmax(260px, 440px) 1fr; }
+}
+
+/* ─────────── Hero illustration ─────────── */
+.hero-illustration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  opacity: 0;
+  animation: fade-up 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms both;
+}
+
+.boy-tree {
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  display: block;
+}
+.boy-tree .stroke-ink  { stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.boy-tree .stroke-soft { stroke: var(--ink-soft); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.boy-tree .stroke-dim  { stroke: var(--ink-dim); fill: none; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+.boy-tree .fill-paper  { fill: var(--paper-raised); }
+.boy-tree .fill-ink-wash { fill: var(--ink); opacity: 0.06; }
+.boy-tree .fill-dim    { fill: var(--ink-dim); }
+.boy-tree .fill-soft   { fill: var(--ink-soft); }
+
+.boy-tree .leaf-fall { transform-origin: center; animation: float-leaf 7s ease-in-out infinite; }
+.boy-tree .leaf-fall.l2 { animation-delay: -2.3s; animation-duration: 8s; }
+.boy-tree .leaf-fall.l3 { animation-delay: -4.8s; animation-duration: 9s; }
+.boy-tree .breeze { animation: sway 9s ease-in-out infinite; transform-origin: 380px 510px; }
+
+@keyframes float-leaf {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0.9; }
+  50%  { transform: translate(-6px, 10px) rotate(20deg); opacity: 0.55; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 0.9; }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(0.4deg); }
+}
+
+.hero-caption {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+.hero-caption::before, .hero-caption::after {
+  content: "—";
+  margin: 0 0.5rem;
+  color: var(--rule-strong);
+}
+
+/* ─────────── Hero content ─────────── */
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 560px;
+  opacity: 0;
+  animation: fade-up 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 260ms both;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.wordmark::before {
+  content: "";
+  width: 1.8rem;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.tagline {
+  font-family: var(--serif);
+  font-optical-sizing: auto;
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.tagline em {
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 500;
+}
+.tagline .rule {
+  display: inline-block;
+  width: 2.2rem;
+  height: 1px;
+  background: var(--rule-strong);
+  vertical-align: middle;
+  margin: 0 0.4rem 0.4em 0;
+}
+
+.lede {
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 38ch;
+}
+
+/* ─────────── The Card ─────────── */
+.card {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 1.4rem;
+  box-shadow:
+    0 0 0 6px var(--paper-deep),
+    var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  transition: box-shadow 260ms ease, border-color 260ms ease;
 }
-#input-box h2 { font-size: 1.1rem; font-weight: 600; }
-#input-box textarea {
-  width: 100%;
-  height: 200px;
-  background: var(--input-bg);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.75rem;
-  font-family: ui-monospace, monospace;
-  font-size: 0.85rem;
-  resize: vertical;
+.card:focus-within {
+  border-color: var(--rule-strong);
+  box-shadow:
+    0 0 0 6px var(--paper-deep),
+    var(--shadow-lg);
 }
-#input-box .actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-#input-box .actions button {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1.2rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-}
-#input-box .actions label {
-  font-size: 0.8rem;
-  color: var(--dim);
-  cursor: pointer;
-}
-#drop-hint {
-  font-size: 0.8rem;
-  color: var(--dim);
+.card.drag-over {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 6px rgba(184, 69, 30, 0.06),
+    var(--shadow-lg);
 }
 
-/* Help dialog */
-dialog {
-  background: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
-  max-width: 400px;
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
 }
-dialog::backdrop { background: rgba(0,0,0,0.4); }
-dialog h3 { margin-bottom: 0.75rem; }
-dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 1rem; font-size: 0.85rem; }
-dialog dt { font-weight: 600; color: var(--accent); }
-dialog dd { color: var(--fg); }
-dialog button.close {
-  margin-top: 1rem;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--fg);
-  padding: 0.3rem 0.8rem;
-  border-radius: 4px;
+.card-label {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.card-tabs {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--ink-dim);
+}
+.card-tabs span { margin-left: 0.4rem; }
+.card-tabs span::before { content: "·"; margin-right: 0.4rem; color: var(--rule-strong); }
+.card-tabs span:first-of-type::before { content: ""; margin: 0; }
+
+/* Notebook-page textarea */
+#md-input {
+  width: 100%;
+  height: 190px;
+  background:
+    linear-gradient(var(--paper-raised), var(--paper-raised)) padding-box;
+  color: var(--ink);
+  border: none;
+  border-left: 2px solid var(--rule-strong);
+  border-radius: 0 4px 4px 0;
+  padding: 0.85rem 0.9rem 0.85rem 1.1rem;
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.6rem;   /* matches ruled line gradient */
+  resize: vertical;
+  outline: none;
+  /* Ruled notebook lines */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.6rem - 1px),
+    var(--rule) calc(1.6rem - 1px),
+    var(--rule) 1.6rem
+  );
+  background-position: 0 0.4rem;
+  background-size: 100% 100%;
+  background-attachment: local;
+}
+#md-input::placeholder {
+  color: var(--ink-dim);
+  font-style: italic;
+}
+#md-input:focus {
+  border-left-color: var(--accent);
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 0.75rem 1.4rem;
+  border-radius: 8px;
   cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 220ms ease, transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 220ms ease;
+}
+.btn-primary:hover {
+  background: var(--ink-soft);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-primary .arrow { transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.btn-primary:hover .arrow { transform: translateX(3px); }
+
+.file-link {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-bottom: 1px dashed var(--rule-strong);
+  padding-bottom: 1px;
+  transition: color 200ms ease, border-color 200ms ease;
+}
+.file-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+#drop-hint {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  opacity: 0.75;
+  letter-spacing: 0.02em;
+  padding-top: 0.25rem;
+  border-top: 1px dashed var(--rule);
+  margin-top: 0.25rem;
+}
+#drop-hint kbd {
+  font-family: var(--sans);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+#load-error {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--accent);
+  background: rgba(184, 69, 30, 0.06);
+  border-left: 2px solid var(--accent);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0 4px 4px 0;
+  display: none;
+}
+
+/* Meta row (below card) */
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.04em;
+  opacity: 0;
+  animation: fade-up 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 400ms both;
+  padding-top: 0.5rem;
+}
+.meta a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--rule-strong);
+  transition: color 180ms ease;
+}
+.meta a:hover { color: var(--accent); border-color: var(--accent); }
+.meta .kbd-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.meta .kbd-row kbd {
+  font-family: var(--sans);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+}
+
+/* ─────────── Help dialog ─────────── */
+dialog#help-dialog {
+  background: var(--paper-raised);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  padding: 1.75rem 2rem;
+  max-width: 440px;
+  width: calc(100% - 2rem);
+  box-shadow:
+    0 0 0 6px var(--paper-deep),
+    var(--shadow-lg);
+  font-family: var(--sans);
+}
+dialog#help-dialog::backdrop {
+  background: rgba(26, 22, 18, 0.35);
+  backdrop-filter: blur(3px);
+}
+dialog#help-dialog h3 {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+  color: var(--ink);
+}
+dialog#help-dialog .dialog-sub {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+dialog#help-dialog dl {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 0.6rem 1rem;
+  font-size: 0.88rem;
+  align-items: baseline;
+}
+dialog#help-dialog dt {
+  font-family: var(--sans);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+dialog#help-dialog dt kbd {
+  font-family: var(--sans);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 0.78rem;
+  margin-right: 0.25rem;
+}
+dialog#help-dialog dd {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+dialog#help-dialog button.close {
+  margin-top: 1.5rem;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  color: var(--paper);
+  padding: 0.5rem 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: background-color 180ms ease;
+}
+dialog#help-dialog button.close:hover { background: var(--ink-soft); border-color: var(--ink-soft); }
+
+/* ─────────── Responsive tweaks ─────────── */
+@media (max-width: 879px) {
+  .hero-illustration { order: 1; }
+  .hero-content      { order: 2; }
+  .boy-tree          { max-width: 260px; }
+  .tagline           { font-size: clamp(2rem, 8vw, 2.8rem); }
+  .meta              { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+}
+
+/* Reduced motion — honor the quiet */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
 </head>
 <body>
 
-<!-- Reader view -->
-<div id="reader">
+<!-- Hairline progress bar (RSVP) -->
+<div id="progress-bar"></div>
+
+<!-- Reading rails (RSVP) -->
+<div class="rail top"></div>
+<div class="rail bottom"></div>
+
+<!-- Reader (RSVP) view -->
+<main id="reader">
   <div id="word"></div>
   <div id="kind-hint"></div>
   <img id="image-display" alt="">
   <div id="image-caption"></div>
-</div>
+</main>
 
-<!-- Status bar -->
+<!-- Status bar (chrome) -->
 <div id="status">
-  <button id="btn-open" title="Open (Ctrl+O)">📂</button>
-  <button id="btn-prev" title="Previous (←)">◀</button>
-  <button id="btn-play" title="Play/Pause (Space)">▶</button>
-  <button id="btn-next" title="Next (→)">▶▸</button>
-  <button id="btn-wpm-down" title="Slower (↓)">−</button>
-  <span id="wpm-display">300 wpm</span>
-  <button id="btn-wpm-up" title="Faster (↑)">+</button>
-  <span id="progress">0/0</span>
-  <button id="btn-theme" title="Theme (t)">🌓</button>
-  <button id="btn-help" title="Help (?)">?</button>
+  <button id="btn-open" title="Open (Ctrl+O or o)" aria-label="Open">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+  </button>
+  <span class="divider"></span>
+
+  <button id="btn-prev" title="Previous (← or h)" aria-label="Previous word">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+  </button>
+  <button id="btn-play" title="Play / Pause (Space)" aria-label="Play or pause">
+    <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="currentColor"/></svg>
+    <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14" stroke="currentColor" stroke-width="2"/></svg>
+  </button>
+  <button id="btn-next" title="Next (→ or l)" aria-label="Next word">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+
+  <span class="divider"></span>
+
+  <button id="btn-wpm-down" title="Slower (↓ or −)" aria-label="Decrease WPM">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+  </button>
+  <span id="wpm-display">300<em>wpm</em></span>
+  <button id="btn-wpm-up" title="Faster (↑ or +)" aria-label="Increase WPM">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <span class="divider"></span>
+
+  <span id="progress">0<em>/</em>0</span>
+
+  <span class="divider"></span>
+
+  <button id="btn-theme" title="Cycle theme (t)" aria-label="Cycle theme">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.5 5.5 0 0 1 12 3z"/></svg>
+  </button>
+  <button id="btn-help" title="Help (?)" aria-label="Help">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"/></svg>
+  </button>
 </div>
 
-<!-- Input overlay -->
+<!-- Landing / input overlay -->
 <div id="input-overlay">
-  <div id="input-box">
-    <h2>speed-reader</h2>
-    <textarea id="md-input" placeholder="Paste your markdown here…"></textarea>
-    <div class="actions">
-      <button id="btn-load">Read →</button>
-      <label>
-        <input type="file" id="file-input" accept=".md,.markdown,.mdx,.txt" hidden>
-        <span style="text-decoration:underline;cursor:pointer">or open a file…</span>
-      </label>
-    </div>
-    <div id="drop-hint">or drag &amp; drop a .md file anywhere on this page</div>
+  <div class="landing">
+
+    <!-- Hero illustration: a boy reading under a tree -->
+    <aside class="hero-illustration" aria-hidden="true">
+      <svg class="boy-tree" viewBox="0 0 500 640" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ground -->
+        <path class="stroke-soft" d="M 20 510 C 140 503, 360 517, 480 508"/>
+        <!-- Grass tufts -->
+        <path class="stroke-dim" d="M 58 510 l -2 -9 M 64 510 l 0 -7 M 70 510 l 2 -9"/>
+        <path class="stroke-dim" d="M 440 510 l -2 -10 M 446 510 l 0 -8 M 452 510 l 2 -10"/>
+        <path class="stroke-dim" d="M 130 512 l -1 -6 M 134 513 l 1 -5"/>
+
+        <!-- Canopy wash -->
+        <g class="breeze">
+          <path class="fill-ink-wash" d="M 360 155 C 298 124, 232 138, 230 200 C 192 188, 172 232, 214 262 C 194 296, 240 328, 294 306 C 328 336, 384 322, 394 280 C 436 272, 448 224, 412 200 C 434 158, 398 128, 360 155 Z"/>
+          <!-- Canopy outline (single continuous line) -->
+          <path class="stroke-ink" d="M 360 155 C 298 124, 232 138, 230 200 C 192 188, 172 232, 214 262 C 194 296, 240 328, 294 306 C 328 336, 384 322, 394 280 C 436 272, 448 224, 412 200 C 434 158, 398 128, 360 155 Z"/>
+          <!-- Small leaves inside canopy -->
+          <ellipse class="fill-soft" cx="268" cy="184" rx="4.5" ry="2" transform="rotate(30 268 184)"/>
+          <ellipse class="fill-soft" cx="312" cy="158" rx="4.5" ry="2" transform="rotate(-22 312 158)"/>
+          <ellipse class="fill-soft" cx="384" cy="202" rx="4.5" ry="2" transform="rotate(50 384 202)"/>
+          <ellipse class="fill-soft" cx="258" cy="246" rx="4.5" ry="2" transform="rotate(10 258 246)"/>
+          <ellipse class="fill-soft" cx="400" cy="248" rx="4.5" ry="2" transform="rotate(-40 400 248)"/>
+          <ellipse class="fill-soft" cx="344" cy="188" rx="3.5" ry="1.6" transform="rotate(25 344 188)"/>
+          <ellipse class="fill-soft" cx="300" cy="228" rx="3.5" ry="1.6" transform="rotate(-10 300 228)"/>
+        </g>
+
+        <!-- Tree trunk -->
+        <path class="stroke-ink" style="stroke-width:5" d="M 384 510 C 372 440, 390 360, 374 290 C 364 238, 378 190, 362 152"/>
+        <path class="stroke-soft" style="opacity:.5" d="M 376 480 C 370 420, 382 370, 374 310 C 370 260, 378 210, 366 172"/>
+        <!-- Branch stub -->
+        <path class="stroke-ink" style="stroke-width:3" d="M 372 282 Q 342 262, 314 274"/>
+        <path class="stroke-ink" style="stroke-width:3" d="M 378 212 Q 398 198, 418 210"/>
+
+        <!-- Falling leaves (animated) -->
+        <ellipse class="leaf-fall fill-dim" cx="198" cy="342" rx="3.2" ry="1.5" transform="rotate(45 198 342)"/>
+        <ellipse class="leaf-fall l2 fill-dim" cx="442" cy="372" rx="3.2" ry="1.5" transform="rotate(-25 442 372)"/>
+        <ellipse class="leaf-fall l3 fill-dim" cx="162" cy="418" rx="3.2" ry="1.5" transform="rotate(65 162 418)"/>
+
+        <!-- Boy: leaning against trunk -->
+        <!-- Body (torso in vest shape) -->
+        <path class="fill-paper stroke-ink" d="M 278 442 Q 290 398, 313 394 Q 336 390, 350 412 L 354 462 Q 344 478, 322 478 Q 288 478, 278 462 Z"/>
+        <!-- Collar detail -->
+        <path class="stroke-soft" d="M 304 404 Q 313 410, 322 404"/>
+
+        <!-- Head -->
+        <circle class="fill-paper stroke-ink" cx="315" cy="382" r="17"/>
+        <!-- Hair tuft -->
+        <path class="stroke-ink" style="fill:var(--ink);stroke:var(--ink)" d="M 299 372 Q 310 360, 323 366 Q 332 365, 333 378 L 329 370 Q 320 372, 314 374 Q 306 374, 302 380 Z"/>
+        <!-- Closed eye hint -->
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 309 385 q 2 1.5 4 0"/>
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 318 385 q 2 1.5 4 0"/>
+
+        <!-- Legs stretched out, crossed ankle -->
+        <path class="stroke-ink" style="stroke-width:9" d="M 288 478 Q 258 492, 220 490"/>
+        <path class="stroke-ink" style="stroke-width:9" d="M 306 478 Q 278 502, 234 502"/>
+        <!-- Shoes -->
+        <path class="stroke-ink" style="stroke-width:3" d="M 218 492 q -10 0 -12 -4"/>
+        <path class="stroke-ink" style="stroke-width:3" d="M 232 504 q -10 0 -12 -4"/>
+
+        <!-- Arms holding book -->
+        <path class="stroke-ink" style="stroke-width:4.5" d="M 293 434 Q 282 447, 286 462"/>
+        <path class="stroke-ink" style="stroke-width:4.5" d="M 343 434 Q 351 447, 346 462"/>
+
+        <!-- Open book on lap -->
+        <path class="fill-paper stroke-ink" d="M 276 465 L 276 446 L 316 443 L 316 465 Z"/>
+        <path class="fill-paper stroke-ink" d="M 316 443 L 356 446 L 356 465 L 316 465 Z"/>
+        <!-- Spine -->
+        <path class="stroke-ink" style="stroke-width:1.5" d="M 316 443 L 316 465"/>
+        <!-- Page lines -->
+        <path class="stroke-dim" d="M 283 451 L 312 449 M 283 455 L 312 453 M 283 459 L 312 457"/>
+        <path class="stroke-dim" d="M 320 449 L 350 451 M 320 453 L 350 455 M 320 457 L 350 459"/>
+
+        <!-- Tiny sparks / stars -->
+        <path class="stroke-soft" style="stroke-width:1.4" d="M 130 104 l 0 10 m -5 -5 l 10 0"/>
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 450 78 l 0 7 m -3 -3.5 l 6 0"/>
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 82 196 l 0 6 m -3 -3 l 6 0"/>
+
+        <!-- Soft wind lines (breath of thought) -->
+        <path class="stroke-dim" style="opacity:.5" d="M 60 276 Q 82 272, 104 278"/>
+        <path class="stroke-dim" style="opacity:.4" d="M 46 296 Q 72 292, 98 300"/>
+
+        <!-- Subtle "thought" hint above head: a tiny sparrow-esque mark -->
+        <path class="stroke-soft" style="stroke-width:1.3" d="M 260 330 q 6 -6 12 0 q 6 -6 12 0"/>
+      </svg>
+      <p class="hero-caption">A reading instrument</p>
+    </aside>
+
+    <!-- Hero content + card -->
+    <section class="hero-content">
+      <span class="wordmark">Speed&nbsp;Reader</span>
+
+      <h1 class="tagline">
+        <span class="rule"></span>Quiet your mind.<br>
+        <em>Accelerate</em> your story.
+      </h1>
+
+      <p class="lede">
+        Paste a passage, drop a file, or open a book. Read one word at a time —
+        the way ideas want to be absorbed.
+      </p>
+
+      <!-- Shadcn-style card -->
+      <div id="input-box" class="card">
+        <div class="card-head">
+          <label class="card-label" for="md-input">Your text</label>
+          <div class="card-tabs">
+            <span>markdown</span><span>.txt</span><span>.docx</span>
+          </div>
+        </div>
+        <textarea id="md-input" placeholder="Paste a passage, pour in a chapter, or leave this blank and drop a file…"></textarea>
+        <div class="card-actions">
+          <button id="btn-load" class="btn-primary">
+            <span>Begin reading</span>
+            <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </button>
+          <label class="file-link" for="file-input">
+            <input type="file" id="file-input" accept=".md,.markdown,.mdx,.txt,.docx,.pdf" hidden>
+            or open a file…
+          </label>
+        </div>
+        <p id="drop-hint">Drag &amp; drop a <kbd>.md</kbd> <kbd>.txt</kbd> <kbd>.docx</kbd> anywhere on this page.</p>
+        <p id="load-error"></p>
+      </div>
+
+      <div class="meta">
+        <span>Shortcuts</span>
+        <div class="kbd-row">
+          <kbd>Space</kbd><span>play</span>
+          <kbd>←</kbd><kbd>→</kbd><span>step</span>
+          <kbd>↑</kbd><kbd>↓</kbd><span>wpm</span>
+          <kbd>?</kbd><span>help</span>
+        </div>
+      </div>
+    </section>
+
   </div>
 </div>
 
 <!-- Help dialog -->
 <dialog id="help-dialog">
-  <h3>speed-reader — help</h3>
+  <h3>On reading quickly</h3>
+  <p class="dialog-sub">Rapid serial visual presentation — one word at a time, at the pace you choose.</p>
   <dl>
-    <dt>Space</dt><dd>play / pause</dd>
-    <dt>← → or h l</dt><dd>step word</dd>
-    <dt>↑ ↓ or + −</dt><dd>WPM ±25</dd>
-    <dt>Ctrl+O or o</dt><dd>open file / paste</dd>
-    <dt>t</dt><dd>cycle theme</dd>
-    <dt>?</dt><dd>toggle help</dd>
+    <dt><kbd>Space</kbd></dt><dd>play &amp; pause</dd>
+    <dt><kbd>←</kbd> <kbd>→</kbd> / <kbd>h</kbd> <kbd>l</kbd></dt><dd>step by one word</dd>
+    <dt><kbd>↑</kbd> <kbd>↓</kbd> / <kbd>+</kbd> <kbd>−</kbd></dt><dd>adjust reading pace by 25 wpm</dd>
+    <dt><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd>open a file or paste text</dd>
+    <dt><kbd>t</kbd></dt><dd>cycle through paper, ink, and system themes</dd>
+    <dt><kbd>?</kbd></dt><dd>show or hide this card</dd>
   </dl>
   <button class="close" id="btn-close-help">Close</button>
 </dialog>
@@ -276,9 +971,12 @@ const $imgCaption = document.getElementById('image-caption');
 const $play = document.getElementById('btn-play');
 const $wpmDisplay = document.getElementById('wpm-display');
 const $progress = document.getElementById('progress');
+const $progressBar = document.getElementById('progress-bar');
 const $overlay = document.getElementById('input-overlay');
 const $mdInput = document.getElementById('md-input');
 const $help = document.getElementById('help-dialog');
+const $card = document.getElementById('input-box');
+const $loadError = document.getElementById('load-error');
 
 function render() {
   if (!reader || reader.total() === 0) {
@@ -286,7 +984,8 @@ function render() {
     $hint.textContent = '';
     $img.style.display = 'none';
     $imgCaption.style.display = 'none';
-    $progress.textContent = '0/0';
+    $progress.innerHTML = '0<em>/</em>0';
+    $progressBar.style.width = '0%';
     return;
   }
 
@@ -298,7 +997,6 @@ function render() {
   if (kind === 'image' && url) {
     $word.textContent = '';
     $hint.textContent = '';
-    // Resolve relative paths via blobMap (from multi-file drag-drop)
     const filename = url.split('/').pop();
     const resolved = url.startsWith('http') ? url : (blobMap[url] || blobMap[filename] || url);
     $img.src = resolved;
@@ -310,7 +1008,7 @@ function render() {
     $imgCaption.style.display = 'none';
 
     if (kind === 'paragraph') {
-      $word.innerHTML = '<span style="color:var(--dim)">¶</span>';
+      $word.innerHTML = '<span class="pilcrow">¶</span>';
       $hint.textContent = '';
     } else {
       const chars = [...text];
@@ -321,15 +1019,18 @@ function render() {
       ).join('');
       $word.innerHTML = spans;
 
-      $hint.textContent = kind === 'heading' ? '— heading —'
-                        : kind === 'code'    ? '— code —'
+      $hint.textContent = kind === 'heading' ? 'heading'
+                        : kind === 'code'    ? 'code'
                         : '';
     }
   }
 
-  $progress.textContent = `${reader.index() + 1}/${reader.total()}`;
-  $play.textContent = reader.isPlaying() ? '⏸' : '▶';
-  $wpmDisplay.textContent = `${wpm} wpm`;
+  const i = reader.index();
+  const total = reader.total();
+  $progress.innerHTML = `${i + 1}<em>/</em>${total}`;
+  $progressBar.style.width = total > 1 ? `${((i) / (total - 1)) * 100}%` : '0%';
+  $play.classList.toggle('playing', reader.isPlaying());
+  $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
 }
 
 function esc(s) {
@@ -367,12 +1068,72 @@ function togglePlay() {
   else stopTimer();
 }
 
-function loadMarkdown(md) {
+function enterRsvpMode() {
+  document.body.classList.add('rsvp');
+  $overlay.classList.add('hidden');
+}
+
+function exitRsvpMode() {
+  document.body.classList.remove('rsvp');
+  $overlay.classList.remove('hidden');
+  $mdInput.focus();
+}
+
+function setReader(newReader) {
   stopTimer();
   if (reader) reader.free();
-  reader = new WebReader(md);
-  $overlay.classList.add('hidden');
+  reader = newReader;
+  $loadError.style.display = 'none';
+  enterRsvpMode();
   render();
+  // Auto-start after the cinematic entrance settles.
+  setTimeout(() => {
+    if (reader && reader.total() > 0 && !reader.isPlaying()) {
+      reader.setPlaying(true);
+      render();
+      scheduleNext();
+    }
+  }, 900);
+}
+
+function showLoadError(msg) {
+  $loadError.textContent = msg;
+  $loadError.style.display = 'block';
+}
+
+function loadMarkdown(md) {
+  setReader(new WebReader(md));
+}
+
+function loadPlainText(text) {
+  setReader(WebReader.fromText(text));
+}
+
+async function loadFile(file) {
+  const name = file.name.toLowerCase();
+  try {
+    if (name.endsWith('.md') || name.endsWith('.markdown') || name.endsWith('.mdx')) {
+      const text = await file.text();
+      $mdInput.value = text;
+      loadMarkdown(text);
+    } else if (name.endsWith('.txt')) {
+      const text = await file.text();
+      $mdInput.value = text;
+      loadPlainText(text);
+    } else if (name.endsWith('.docx')) {
+      const buf = await file.arrayBuffer();
+      setReader(WebReader.fromDocx(new Uint8Array(buf)));
+    } else if (name.endsWith('.pdf')) {
+      showLoadError('PDF isn\u2019t supported in the browser yet. Convert to .docx or .txt, or use the CLI.');
+    } else {
+      const text = await file.text();
+      $mdInput.value = text;
+      loadPlainText(text);
+    }
+  } catch (err) {
+    console.error(err);
+    showLoadError(`Could not open "${file.name}": ${err.message || err}`);
+  }
 }
 
 // --- Controls ---
@@ -396,19 +1157,18 @@ document.getElementById('btn-prev').addEventListener('click', () => {
 
 document.getElementById('btn-wpm-up').addEventListener('click', () => {
   wpm = Math.min(wpm + 25, 1500);
-  $wpmDisplay.textContent = `${wpm} wpm`;
+  $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
 });
 
 document.getElementById('btn-wpm-down').addEventListener('click', () => {
   wpm = Math.max(wpm - 25, 50);
-  $wpmDisplay.textContent = `${wpm} wpm`;
+  $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
 });
 
 document.getElementById('btn-open').addEventListener('click', () => {
   stopTimer();
   if (reader) reader.setPlaying(false);
-  $overlay.classList.remove('hidden');
-  $mdInput.focus();
+  exitRsvpMode();
 });
 
 document.getElementById('btn-load').addEventListener('click', () => {
@@ -419,7 +1179,7 @@ document.getElementById('btn-load').addEventListener('click', () => {
 document.getElementById('file-input').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  file.text().then(md => { $mdInput.value = md; loadMarkdown(md); });
+  loadFile(file);
 });
 
 document.getElementById('btn-theme').addEventListener('click', cycleTheme);
@@ -438,32 +1198,44 @@ function cycleTheme() {
   else document.documentElement.setAttribute('data-theme', t);
 }
 
-// --- Drag & drop (supports multi-file: .md + images) ---
-const blobMap = {};  // filename → blob URL for relative image resolution
+// --- Drag & drop (supports multi-file: doc + images) ---
+const blobMap = {};
+let dragDepth = 0;
+
 document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('dragenter', e => {
+  e.preventDefault();
+  dragDepth += 1;
+  $card && $card.classList.add('drag-over');
+});
+document.addEventListener('dragleave', () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) $card && $card.classList.remove('drag-over');
+});
 document.addEventListener('drop', async e => {
   e.preventDefault();
+  dragDepth = 0;
+  $card && $card.classList.remove('drag-over');
   const files = [...e.dataTransfer.files];
-  let mdFile = null;
+  let docFile = null;
   for (const f of files) {
     const name = f.name.toLowerCase();
-    if (name.endsWith('.md') || name.endsWith('.markdown') || name.endsWith('.mdx') || name.endsWith('.txt')) {
-      mdFile = f;
+    const isDoc = name.endsWith('.md') || name.endsWith('.markdown')
+                  || name.endsWith('.mdx') || name.endsWith('.txt')
+                  || name.endsWith('.docx') || name.endsWith('.pdf');
+    if (isDoc) {
+      docFile = f;
     } else if (f.type.startsWith('image/')) {
       blobMap[f.name] = URL.createObjectURL(f);
     }
   }
-  if (mdFile) {
-    const md = await mdFile.text();
-    loadMarkdown(md);
-  }
+  if (docFile) loadFile(docFile);
 });
 
 // --- Keyboard shortcuts ---
 document.addEventListener('keydown', e => {
-  // Don't capture when typing in textarea
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
-    if (e.key === 'Escape') { $overlay.classList.add('hidden'); render(); }
+    if (e.key === 'Escape' && reader) { enterRsvpMode(); render(); }
     return;
   }
   if ($help.open && (e.key === 'Escape' || e.key === '?')) {
@@ -482,24 +1254,17 @@ document.addEventListener('keydown', e => {
       break;
     case 'ArrowUp': case '+': case '=':
       wpm = Math.min(wpm + 25, 1500);
-      $wpmDisplay.textContent = `${wpm} wpm`;
+      $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
       break;
     case 'ArrowDown': case '-':
       wpm = Math.max(wpm - 25, 50);
-      $wpmDisplay.textContent = `${wpm} wpm`;
+      $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
       break;
     case 'o':
-      if (!e.ctrlKey) {
-        stopTimer(); if (reader) reader.setPlaying(false);
-        $overlay.classList.remove('hidden'); $mdInput.focus();
-      }
+      if (!e.ctrlKey) { stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }
       break;
     case 'O':
-      if (e.ctrlKey) {
-        e.preventDefault();
-        stopTimer(); if (reader) reader.setPlaying(false);
-        $overlay.classList.remove('hidden'); $mdInput.focus();
-      }
+      if (e.ctrlKey) { e.preventDefault(); stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }
       break;
     case 't':
       cycleTheme();
@@ -510,12 +1275,11 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Handle Ctrl+O
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'o') {
     e.preventDefault();
     stopTimer(); if (reader) reader.setPlaying(false);
-    $overlay.classList.remove('hidden'); $mdInput.focus();
+    exitRsvpMode();
   }
 });
 
