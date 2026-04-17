@@ -42,7 +42,7 @@
   --serif: 'Fraunces', 'Libre Baskerville', 'Iowan Old Style', 'Palatino', Georgia, serif;
   --sans:  'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Reader typeface — user-adjustable, persisted to localStorage. */
-  --reading-font: 'Fraunces', 'Libre Baskerville', Georgia, serif;
+  --reading-font: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -893,6 +893,115 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   .meta              { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 }
 
+/* ─── Mobile (≤ 520px) ─── */
+@media (max-width: 520px) {
+  /* Landing page */
+  .landing { padding: 1.5rem 1rem; gap: 1.5rem; }
+  .boy-tree { max-width: 180px; }
+  .hero-caption { font-size: 0.78rem; }
+  .lede { font-size: 0.95rem; }
+  .card { padding: 1rem; gap: 0.75rem; }
+  #md-input { height: 140px; font-size: 0.92rem; }
+  .card-tabs { display: none; }
+  #drop-hint { display: none; }
+  .privacy-note { font-size: 0.7rem; }
+  .meta { display: none; }
+
+  /* RSVP mode */
+  #reader { padding: 1rem 0.5rem; }
+  #word { font-size: clamp(2rem, 11vw, 4rem); }
+  .rail { width: min(560px, 90vw); }
+  .rail.top    { top: calc(50% - 5.5rem); }
+  .rail.bottom { top: calc(50% + 5.5rem); }
+
+  /* Touch hint: shown once in RSVP on mobile */
+  #touch-hint {
+    display: block;
+  }
+
+  /* Status bar: two-row layout on mobile for bigger touch targets */
+  #status {
+    padding: 0.6rem 0.5rem;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    display: grid;
+    grid-template-columns: auto auto 1fr auto auto;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    align-items: center;
+  }
+  #status .divider { display: none; }
+  #status button {
+    min-width: 2.8rem;
+    height: 2.8rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+  #status button svg { width: 18px; height: 18px; }
+  #btn-play {
+    min-width: 3.2rem;
+    height: 3.2rem;
+    border-radius: 50%;
+  }
+  #wpm-display, #progress { font-size: 0.78rem; padding: 0 0.2rem; }
+
+  /* Row 1: prev | wpm-down | play | wpm-up | next */
+  #btn-prev     { grid-column: 1; grid-row: 1; }
+  #btn-wpm-down { grid-column: 2; grid-row: 1; }
+  #btn-play     { grid-column: 3; grid-row: 1; }
+  #btn-wpm-up   { grid-column: 4; grid-row: 1; }
+  #btn-next     { grid-column: 5; grid-row: 1; }
+
+  /* Row 2: open | wpm | progress | font | theme | help */
+  #btn-open     { grid-column: 1; grid-row: 2; }
+  #wpm-display  { grid-column: 2; grid-row: 2; }
+  #progress     { grid-column: 3; grid-row: 2; }
+  .font-picker  { grid-column: 4; grid-row: 2; }
+  #btn-theme    { grid-column: 5; grid-row: 2; }
+  #btn-help     { display: none; }
+
+  /* Font menu: full-width bottom sheet on mobile */
+  #font-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    min-width: 0;
+    width: 100%;
+    border-radius: 14px 14px 0 0;
+    max-height: 70vh;
+    transform-origin: bottom center;
+  }
+
+  /* Help dialog */
+  dialog#help-dialog { padding: 1.25rem 1.2rem; max-width: calc(100vw - 1rem); }
+  dialog#help-dialog dl { grid-template-columns: 7rem 1fr; gap: 0.4rem 0.6rem; font-size: 0.82rem; }
+}
+
+/* Touch hint (hidden on desktop, visible briefly on mobile) */
+#touch-hint {
+  display: none;
+  position: fixed;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  white-space: nowrap;
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 500ms ease;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+#touch-hint.show { opacity: 1; }
+
 /* Reduced motion — honor the quiet */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -911,6 +1020,9 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
 <!-- Reading rails (RSVP) -->
 <div class="rail top"></div>
 <div class="rail bottom"></div>
+
+<!-- Touch gesture hint (mobile only, shown once) -->
+<div id="touch-hint">tap to play · swipe ←→ to step</div>
 
 <!-- Reader (RSVP) view -->
 <main id="reader">
@@ -1075,7 +1187,7 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
         <div class="card-head">
           <label class="card-label" for="md-input">Your text</label>
           <div class="card-tabs">
-            <span>markdown</span><span>.txt</span><span>.docx</span>
+            <span>markdown</span><span>.txt</span><span>.docx</span><span>.pdf</span>
           </div>
         </div>
         <textarea id="md-input" placeholder="Paste a passage, pour in a chapter, or leave this blank and drop a file…"></textarea>
@@ -1091,7 +1203,7 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
             or open a file…
           </label>
         </div>
-        <p id="drop-hint">Drag &amp; drop a <kbd>.md</kbd> <kbd>.txt</kbd> <kbd>.docx</kbd> anywhere on this page.</p>
+        <p id="drop-hint">Drag &amp; drop a <kbd>.md</kbd> <kbd>.txt</kbd> <kbd>.docx</kbd> <kbd>.pdf</kbd> anywhere on this page.</p>
         <p id="load-error"></p>
         <span class="privacy-note" title="All parsing runs locally in your browser via WebAssembly.">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
@@ -1171,9 +1283,10 @@ const FONTS = [
   { key: 'atkinson',   name: 'Atkinson Hyperlegible',  stack: "'Atkinson Hyperlegible', system-ui, sans-serif",    group: 'Sans · Built for legibility',  note: 'Kind to tired eyes' },
   { key: 'bevn',       name: 'Be Vietnam Pro',         stack: "'Be Vietnam Pro', system-ui, sans-serif",           group: 'Sans · Native Tiếng Việt',     note: 'Designed in Vietnam' },
   { key: 'instrument', name: 'Instrument Sans',        stack: "'Instrument Sans', system-ui, sans-serif",          group: 'Sans · Modern',                note: 'Refined UI sans' },
+  { key: 'sfpro',      name: 'SF Pro',                 stack: "-apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif", group: 'Sans · Apple',  note: 'Native on iPhone, iPad & Mac' },
   { key: 'jbmono',     name: 'JetBrains Mono',         stack: "'JetBrains Mono', ui-monospace, monospace",         group: 'Mono · Code',                  note: 'For code-heavy text' },
 ];
-const DEFAULT_FONT_KEY = 'fraunces';
+const DEFAULT_FONT_KEY = 'sfpro';
 
 const $word = document.getElementById('word');
 const $hint = document.getElementById('kind-hint');
@@ -1279,9 +1392,17 @@ function togglePlay() {
   else stopTimer();
 }
 
+let touchHintShown = false;
 function enterRsvpMode() {
   document.body.classList.add('rsvp');
   $overlay.classList.add('hidden');
+  // Show touch hint once on mobile
+  if (!touchHintShown && 'ontouchstart' in window) {
+    touchHintShown = true;
+    const hint = document.getElementById('touch-hint');
+    setTimeout(() => hint.classList.add('show'), 800);
+    setTimeout(() => hint.classList.remove('show'), 4000);
+  }
 }
 
 function exitRsvpMode() {
@@ -1576,6 +1697,34 @@ document.addEventListener('keydown', e => {
     exitRsvpMode();
   }
 });
+
+// --- Touch gestures (mobile: swipe ←/→ to step, tap to play/pause) ---
+{
+  const $reader = document.getElementById('reader');
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+  $reader.addEventListener('touchstart', e => {
+    if (!reader || !document.body.classList.contains('rsvp')) return;
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+  $reader.addEventListener('touchend', e => {
+    if (!reader || !document.body.classList.contains('rsvp')) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    const absDx = Math.abs(dx), absDy = Math.abs(dy);
+    if (absDx > 40 && absDx > absDy * 1.5 && dt < 400) {
+      reader.setPlaying(false); stopTimer();
+      if (dx > 0) reader.retreat(); else reader.advance();
+      render();
+    } else if (absDx < 15 && absDy < 15 && dt < 300) {
+      togglePlay();
+    }
+  }, { passive: true });
+}
 
 // --- URL param: ?src= ---
 const srcParam = new URLSearchParams(location.search).get('src');
