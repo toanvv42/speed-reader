@@ -213,12 +213,18 @@ body.rsvp #reader {
 #progress-bar {
   position: fixed;
   top: 0; left: 0;
-  height: 2px;
+  height: 3px;
   background: var(--accent);
   width: 0%;
-  transition: width 120ms linear, opacity 400ms ease 500ms;
+  transition: width 120ms linear, opacity 400ms ease 500ms, height 120ms ease;
   opacity: 0;
   z-index: 5;
+  cursor: pointer;
+  touch-action: none;
+}
+#progress-bar:hover {
+  height: 8px;
+  opacity: 1 !important;
 }
 body.rsvp #progress-bar { opacity: 0.85; }
 
@@ -1305,6 +1311,15 @@ const $loadError = document.getElementById('load-error');
 let currentFileHash = null;
 
 async function getFileHash(data) {
+  if (!crypto.subtle) {
+    let hash = 0;
+    const bytes = new Uint8Array(data);
+    for (let i = 0; i < bytes.length; i++) {
+      hash = ((hash << 5) - hash) + bytes[i];
+      hash |= 0;
+    }
+    return 'fb-' + Math.abs(hash).toString(16);
+  }
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -1752,6 +1767,37 @@ document.addEventListener('keydown', e => {
     }
   }, { passive: true });
 }
+
+// --- Progress bar seeking ---
+let isDraggingProgress = false;
+$progressBar.addEventListener('pointerdown', e => {
+  if (!reader) return;
+  isDraggingProgress = true;
+  $progressBar.setPointerCapture(e.pointerId);
+  reader.setPlaying(false);
+  stopTimer();
+  const total = reader.total();
+  const x = e.clientX;
+  const w = window.innerWidth;
+  const pct = Math.max(0, Math.min(1, x / w));
+  reader.setIndex(Math.round(pct * (total - 1)));
+  render();
+});
+document.addEventListener('pointermove', e => {
+  if (!isDraggingProgress || !reader) return;
+  const total = reader.total();
+  const x = e.clientX;
+  const w = window.innerWidth;
+  const pct = Math.max(0, Math.min(1, x / w));
+  reader.setIndex(Math.round(pct * (total - 1)));
+  render();
+});
+document.addEventListener('pointerup', e => {
+  if (isDraggingProgress) {
+    isDraggingProgress = false;
+    $progressBar.releasePointerCapture(e.pointerId);
+  }
+});
 
 // --- URL param: ?src= ---
 const srcParam = new URLSearchParams(location.search).get('src');
