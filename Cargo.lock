@@ -1858,6 +1858,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-wasm-bindgen"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8302e169f0eddcc139c70f139d19d6467353af16f9fce27e8c30158036a1e16b"
+dependencies = [
+ "js-sys",
+ "serde",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "serde_core"
 version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1964,12 +1975,17 @@ dependencies = [
  "clap",
  "crossterm 0.28.1",
  "image",
+ "js-sys",
  "pulldown-cmark",
  "ratatui",
  "ratatui-image",
+ "serde",
+ "serde-wasm-bindgen",
  "terminal-light",
  "unicode-segmentation",
  "ureq",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -2435,6 +2451,16 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap",
  "semver",
+]
+
+[[package]]
+name = "web-sys"
+version = "0.3.95"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f2dfbb17949fa2088e5d39408c48368947b86f7834484e87b73de55bc14d97d"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
 ]
 
 [[package]]

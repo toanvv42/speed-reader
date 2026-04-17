@@ -5,7 +5,7 @@ VERSION := $(shell awk -F\" '/^version/ {print $$2; exit}' Cargo.toml)
 
 # ---- native (same OS you're on) ----
 
-.PHONY: all build run install uninstall clean help
+.PHONY: all build run install uninstall clean help web
 
 all: build
 
@@ -23,6 +23,9 @@ install: build
 
 uninstall:
 	rm -f $(PREFIX)/bin/$(BIN)
+
+web:
+	./scripts/build-web.sh
 
 clean:
 	cargo clean

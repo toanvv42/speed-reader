@@ -13,15 +13,11 @@ use ratatui::{Terminal, backend::CrosstermBackend, prelude::Backend};
 use ratatui_image::picker::Picker as ImagePicker;
 
 mod app;
-mod doc;
 mod input;
-mod reader;
-mod text;
-mod theme;
 mod ui;
 
 use app::App;
-use theme::ThemeChoice;
+use speed_reader::theme::{self, ThemeChoice};
 
 #[derive(Parser)]
 #[command(name = "speed-reader", about = "RSVP speed reader for markdown files")]

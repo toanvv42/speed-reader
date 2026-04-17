@@ -1,5 +1,7 @@
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
+#[cfg(not(target_arch = "wasm32"))]
 use anyhow::{Context, Result};
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
@@ -12,6 +14,7 @@ pub enum Block {
     Image(String),
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn load(path: &Path) -> Result<Vec<Block>> {
     let src = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read {}", path.display()))?;

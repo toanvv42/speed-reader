@@ -9,9 +9,9 @@ use ratatui_image::{Resize, StatefulImage};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::app::{App, Mode};
-use crate::reader::{Chunk, ChunkKind};
-use crate::text::truncate_start;
-use crate::theme::Palette;
+use speed_reader::reader::{Chunk, ChunkKind};
+use speed_reader::text::truncate_start;
+use speed_reader::theme::Palette;
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     let size = f.area();

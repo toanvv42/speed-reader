@@ -8,9 +8,9 @@ use anyhow::{Context, Result};
 use ratatui_image::picker::Picker as ImagePicker;
 use ratatui_image::protocol::StatefulProtocol;
 
-use crate::doc::Block;
-use crate::reader::Reader;
-use crate::theme::{Theme, ThemeChoice};
+use speed_reader::doc::Block;
+use speed_reader::reader::Reader;
+use speed_reader::theme::{Theme, ThemeChoice};
 
 struct ImageJob {
     url: String,
@@ -105,7 +105,7 @@ impl App {
     }
 
     pub fn open_path(&mut self, path: &Path) -> Result<()> {
-        let blocks = crate::doc::load(path)?;
+        let blocks = speed_reader::doc::load(path)?;
         let base_dir = path.parent().map(|p| p.to_path_buf());
 
         self.image_cache.clear();
@@ -244,7 +244,7 @@ impl App {
             }
             Action::CycleTheme => {
                 self.theme_choice = self.theme_choice.cycle();
-                self.theme = crate::theme::resolve(self.theme_choice);
+                self.theme = speed_reader::theme::resolve(self.theme_choice);
                 self.status_msg = Some(format!("theme: {}", self.theme_choice.label()));
             }
             Action::PickerInput(c) => {
