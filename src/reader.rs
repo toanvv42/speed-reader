@@ -55,10 +55,6 @@ impl Reader {
             return;
         }
         self.index = (self.index + n).min(self.chunks.len() - 1);
-        if self.current().map(|c| c.kind) == Some(ChunkKind::Image) {
-            // give the reader a beat to look at the picture
-            self.playing = false;
-        }
     }
 
     pub fn retreat(&mut self, n: usize) {
@@ -69,7 +65,10 @@ impl Reader {
         self.chunks.is_empty() || self.index + 1 >= self.chunks.len()
     }
 
-    pub fn chunk_duration(&self, wpm: u32) -> Duration {
+    pub fn chunk_duration(&self, wpm: u32, image_pause: Duration) -> Duration {
+        if self.current().map(|c| c.kind) == Some(ChunkKind::Image) {
+            return image_pause;
+        }
         let base_ms = 60_000.0 / (wpm.max(1) as f32);
         let m = self.current().map(|c| c.multiplier).unwrap_or(1.0);
         Duration::from_millis((base_ms * m).max(20.0) as u64)
@@ -195,28 +194,41 @@ mod tests {
     #[test]
     fn chunk_duration_scales_inversely_with_wpm() {
         let r = Reader::from_blocks(vec![Block::Text("word".into())]);
-        let fast = r.chunk_duration(600);
-        let slow = r.chunk_duration(300);
+        let pause = Duration::from_secs(3);
+        let fast = r.chunk_duration(600, pause);
+        let slow = r.chunk_duration(300, pause);
         assert!(slow > fast, "slower wpm must yield longer duration");
     }
 
     #[test]
     fn chunk_duration_has_minimum_floor() {
         let r = Reader::from_blocks(vec![Block::Text("word".into())]);
-        let d = r.chunk_duration(10_000);
+        let d = r.chunk_duration(10_000, Duration::from_secs(3));
         assert!(d >= Duration::from_millis(20));
     }
 
     #[test]
-    fn image_block_produces_image_chunk_and_pauses_on_advance() {
+    fn image_chunk_uses_configured_pause_duration() {
+        let mut r = Reader::from_blocks(vec![
+            Block::Text("a".into()),
+            Block::Image("file.png".into()),
+        ]);
+        // chunks: [Word("a"), Paragraph, Image]
+        r.advance(2);
+        assert_eq!(r.current().map(|c| c.kind), Some(ChunkKind::Image));
+        let pause = Duration::from_millis(1234);
+        assert_eq!(r.chunk_duration(300, pause), pause);
+    }
+
+    #[test]
+    fn advance_onto_image_does_not_pause_playback() {
         let mut r = Reader::from_blocks(vec![
             Block::Text("a".into()),
             Block::Image("file.png".into()),
         ]);
         r.playing = true;
-        // chunks: [Word("a"), Paragraph, Image]
         r.advance(2);
         assert_eq!(r.current().map(|c| c.kind), Some(ChunkKind::Image));
-        assert!(!r.playing, "landing on image should pause playback");
+        assert!(r.playing, "image should auto-advance, not force-pause");
     }
 }

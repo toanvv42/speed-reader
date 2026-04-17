@@ -5,7 +5,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
 };
-use ratatui_image::StatefulImage;
+use ratatui_image::{Resize, StatefulImage};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::app::{App, Mode};
@@ -120,8 +120,15 @@ fn draw_image_body(f: &mut Frame, app: &mut App, body: Rect, url: Option<String>
 
     match app.image_cache.get_mut(&url) {
         Some(proto) => {
-            let widget = StatefulImage::default();
-            f.render_stateful_widget(widget, image_area, proto);
+            let resize = Resize::Fit(None);
+            let rendered = proto.size_for(resize.clone(), image_area);
+            let w = rendered.width.min(image_area.width);
+            let h = rendered.height.min(image_area.height);
+            let x = image_area.x + image_area.width.saturating_sub(w) / 2;
+            let y = image_area.y + image_area.height.saturating_sub(h) / 2;
+            let centered = Rect::new(x, y, w, h);
+            let widget = StatefulImage::default().resize(resize);
+            f.render_stateful_widget(widget, centered, proto);
 
             let caption = Line::from(vec![
                 Span::styled("image: ", Style::default().fg(p.dim)),
@@ -131,7 +138,7 @@ fn draw_image_body(f: &mut Frame, app: &mut App, body: Rect, url: Option<String>
                 ),
             ]);
             let hint = Line::from(Span::styled(
-                "Space to continue · ← → to step",
+                "auto-advances · Space pause · ← → to step",
                 Style::default().fg(p.dim),
             ));
             let para = Paragraph::new(vec![caption, hint]).alignment(Alignment::Center);
@@ -298,7 +305,7 @@ fn draw_help(f: &mut Frame, area: Rect, p: &Palette) {
         Line::from("  ?          toggle this help"),
         Line::from("  q / Esc    quit"),
         Line::from(""),
-        Line::from("  on image   Space / → to continue"),
+        Line::from("  on image   auto-advance (--image-pause N sec)"),
         Line::from("  (picker)   ↑↓ move · Enter open · Esc cancel"),
     ];
 

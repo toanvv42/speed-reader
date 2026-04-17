@@ -1,5 +1,6 @@
 use std::io::stdout;
 use std::path::PathBuf;
+use std::time::Duration;
 
 use anyhow::Result;
 use clap::Parser;
@@ -31,6 +32,10 @@ struct Cli {
     /// Color theme. `system` queries the terminal background (OSC 11).
     #[arg(long, value_enum, default_value_t = ThemeChoice::System)]
     theme: ThemeChoice,
+
+    /// Seconds to dwell on each image before auto-advancing.
+    #[arg(long, default_value_t = 3.0)]
+    image_pause: f32,
 }
 
 fn main() -> Result<()> {
@@ -50,7 +55,8 @@ fn main() -> Result<()> {
     let backend = CrosstermBackend::new(out);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new(image_picker, theme_choice, theme);
+    let image_pause = Duration::from_millis((cli.image_pause.max(0.0) * 1000.0) as u64);
+    let mut app = App::new(image_picker, theme_choice, theme, image_pause);
     let run_res = (|| -> Result<()> {
         if let Some(path) = cli.path.as_ref() {
             app.open_path(path)?;
