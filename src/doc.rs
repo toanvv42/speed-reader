@@ -89,10 +89,8 @@ pub fn parse_markdown(src: &str) -> Vec<Block> {
                     buf.push_str(&t);
                 }
             }
-            Event::Code(t) => {
-                if !in_image {
-                    buf.push_str(&t);
-                }
+            Event::Code(t) if !in_image => {
+                buf.push_str(&t);
             }
             Event::SoftBreak | Event::HardBreak => {
                 if in_code {
