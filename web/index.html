@@ -4,6 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>speed-reader — a quiet reading instrument</title>
+<meta name="description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tinywins.us/">
+<meta property="og:title" content="speed-reader — a quiet reading instrument">
+<meta property="og:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
+<meta property="og:image" content="https://tinywins.us/og.svg">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://tinywins.us/">
+<meta property="twitter:title" content="speed-reader — a quiet reading instrument">
+<meta property="twitter:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
+<meta property="twitter:image" content="https://tinywins.us/og.svg">
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Noto+Serif:ital,wght@0,400;0,500;1,400&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap');
 
@@ -1119,6 +1135,21 @@ import init, { WebReader } from './pkg/speed_reader.js';
 await init();
 // END_WASM_INLINE_MARKER
 
+// ─── pdf.js for browser-side PDF text extraction ───
+const pdfjsLib = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.min.mjs');
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.worker.min.mjs';
+
+async function extractPdfText(arrayBuffer) {
+  const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(content.items.map(item => item.str).join(' '));
+  }
+  return pages.join('\n\n');
+}
+
 let reader = null;
 let wpm = 300;
 let imagePauseMs = 3000;
@@ -1304,7 +1335,10 @@ async function loadFile(file) {
       const buf = await file.arrayBuffer();
       setReader(WebReader.fromDocx(new Uint8Array(buf)));
     } else if (name.endsWith('.pdf')) {
-      showLoadError('PDF isn\u2019t supported in the browser yet. Convert to .docx or .txt, or use the CLI.');
+      const buf = await file.arrayBuffer();
+      const text = await extractPdfText(buf);
+      $mdInput.value = text;
+      loadPlainText(text);
     } else {
       const text = await file.text();
       $mdInput.value = text;
