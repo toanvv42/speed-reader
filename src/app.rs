@@ -7,10 +7,17 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result};
 use ratatui_image::picker::Picker as ImagePicker;
 use ratatui_image::protocol::StatefulProtocol;
+use serde::{Deserialize, Serialize};
 
 use speed_reader::doc::Block;
 use speed_reader::reader::Reader;
 use speed_reader::theme::{Theme, ThemeChoice};
+
+#[derive(Serialize, Deserialize, Default)]
+struct State {
+    // Map of absolute file path to last read index
+    locations: HashMap<String, usize>,
+}
 
 struct ImageJob {
     url: String,
@@ -61,6 +68,7 @@ pub struct App {
     pub theme_choice: ThemeChoice,
     pub theme: Theme,
     pub image_pause: Duration,
+    state: State,
 }
 
 pub struct FilePicker {
@@ -82,6 +90,7 @@ impl App {
             .timeout(Duration::from_secs(15))
             .build();
         let (image_tx, image_rx) = mpsc::channel();
+        let state = Self::load_state().unwrap_or_default();
         Self {
             should_quit: false,
             mode: Mode::Reading,
@@ -101,10 +110,59 @@ impl App {
             theme_choice,
             theme,
             image_pause,
+            state,
+        }
+    }
+
+    fn state_path() -> Option<PathBuf> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let home = std::env::var("HOME").ok().or_else(|| std::env::var("USERPROFILE").ok())?;
+            Some(PathBuf::from(home).join(".speed-reader-state.json"))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            None
+        }
+    }
+
+    fn load_state() -> Result<State> {
+        let path = match Self::state_path() {
+            Some(p) => p,
+            None => return Ok(State::default()),
+        };
+        if !path.exists() {
+            return Ok(State::default());
+        }
+        let f = std::fs::File::open(path)?;
+        let state = serde_json::from_reader(f)?;
+        Ok(state)
+    }
+
+    fn save_state(&self) -> Result<()> {
+        let path = match Self::state_path() {
+            Some(p) => p,
+            None => return Ok(()),
+        };
+        let f = std::fs::File::create(path)?;
+        serde_json::to_writer(f, &self.state)?;
+        Ok(())
+    }
+
+    fn record_current_location(&mut self) {
+        if let Some(path) = &self.file_path {
+            if let Ok(abs) = std::fs::canonicalize(path) {
+                if let Some(s) = abs.to_str() {
+                    self.state.locations.insert(s.to_string(), self.reader.index);
+                }
+            }
         }
     }
 
     pub fn open_path(&mut self, path: &Path) -> Result<()> {
+        self.record_current_location();
+        let _ = self.save_state();
+
         let blocks = speed_reader::doc::load(path)?;
         let base_dir = path.parent().map(|p| p.to_path_buf());
 
@@ -132,6 +190,16 @@ impl App {
 
         self.reader = Reader::from_blocks(blocks);
         self.file_path = Some(path.to_path_buf());
+
+        // Restore location
+        if let Ok(abs) = std::fs::canonicalize(path) {
+            if let Some(s) = abs.to_str() {
+                if let Some(&idx) = self.state.locations.get(s) {
+                    self.reader.index = idx.min(self.reader.chunks.len().saturating_sub(1));
+                }
+            }
+        }
+
         self.mode = Mode::Reading;
         self.last_tick = Instant::now();
         self.update_image_status();
@@ -205,7 +273,11 @@ impl App {
 
     pub fn handle(&mut self, action: Action) -> Result<()> {
         match action {
-            Action::Quit => self.should_quit = true,
+            Action::Quit => {
+                self.record_current_location();
+                let _ = self.save_state();
+                self.should_quit = true;
+            }
             Action::TogglePlay => {
                 if !self.reader.chunks.is_empty() {
                     if self.reader.at_end() && !self.reader.playing {

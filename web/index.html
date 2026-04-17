@@ -1302,6 +1302,20 @@ const $help = document.getElementById('help-dialog');
 const $card = document.getElementById('input-box');
 const $loadError = document.getElementById('load-error');
 
+let currentFileHash = null;
+
+async function getFileHash(data) {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function saveLocation() {
+  if (reader && currentFileHash) {
+    lsSet(`sr.loc.${currentFileHash}`, reader.index());
+  }
+}
+
 function render() {
   if (!reader || reader.total() === 0) {
     $word.textContent = '';
@@ -1312,6 +1326,8 @@ function render() {
     $progressBar.style.width = '0%';
     return;
   }
+
+  saveLocation();
 
   const kind = reader.kind();
   const text = reader.text();
@@ -1433,12 +1449,18 @@ function showLoadError(msg) {
   $loadError.style.display = 'block';
 }
 
-function loadMarkdown(md) {
-  setReader(new WebReader(md));
+async function loadMarkdown(md) {
+  const encoder = new TextEncoder();
+  currentFileHash = await getFileHash(encoder.encode(md));
+  const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+  setReader(new WebReader(md, lastIdx));
 }
 
-function loadPlainText(text) {
-  setReader(WebReader.fromText(text));
+async function loadPlainText(text) {
+  const encoder = new TextEncoder();
+  currentFileHash = await getFileHash(encoder.encode(text));
+  const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+  setReader(WebReader.fromText(text, lastIdx));
 }
 
 async function loadFile(file) {
@@ -1447,23 +1469,28 @@ async function loadFile(file) {
     if (name.endsWith('.md') || name.endsWith('.markdown') || name.endsWith('.mdx')) {
       const text = await file.text();
       $mdInput.value = text;
-      loadMarkdown(text);
+      await loadMarkdown(text);
     } else if (name.endsWith('.txt')) {
       const text = await file.text();
       $mdInput.value = text;
-      loadPlainText(text);
+      await loadPlainText(text);
     } else if (name.endsWith('.docx')) {
       const buf = await file.arrayBuffer();
-      setReader(WebReader.fromDocx(new Uint8Array(buf)));
+      currentFileHash = await getFileHash(new Uint8Array(buf));
+      const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+      setReader(WebReader.fromDocx(new Uint8Array(buf), lastIdx));
     } else if (name.endsWith('.pdf')) {
       const buf = await file.arrayBuffer();
+      currentFileHash = await getFileHash(new Uint8Array(buf));
       const text = await extractPdfText(buf);
       $mdInput.value = text;
-      loadPlainText(text);
+      // For PDF, we hash the source bytes to identify it, but use the extracted text.
+      const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+      setReader(WebReader.fromText(text, lastIdx));
     } else {
       const text = await file.text();
       $mdInput.value = text;
-      loadPlainText(text);
+      await loadPlainText(text);
     }
   } catch (err) {
     console.error(err);
@@ -1643,7 +1670,7 @@ document.addEventListener('drop', async e => {
       blobMap[f.name] = URL.createObjectURL(f);
     }
   }
-  if (docFile) loadFile(docFile);
+  if (docFile) await loadFile(docFile);
 });
 
 // --- Keyboard shortcuts ---
@@ -1731,7 +1758,7 @@ const srcParam = new URLSearchParams(location.search).get('src');
 if (srcParam) {
   fetch(srcParam)
     .then(r => r.text())
-    .then(md => loadMarkdown(md))
+    .then(async md => await loadMarkdown(md))
     .catch(err => console.error('Failed to fetch ?src=', err));
 }
 </script>

@@ -11,28 +11,34 @@ pub struct WebReader {
 #[wasm_bindgen]
 impl WebReader {
     #[wasm_bindgen(constructor)]
-    pub fn new(markdown: &str) -> WebReader {
+    pub fn new(markdown: &str, last_index: Option<usize>) -> WebReader {
         let blocks = parse_markdown(markdown);
-        WebReader {
-            inner: Reader::from_blocks(blocks),
+        let mut inner = Reader::from_blocks(blocks);
+        if let Some(idx) = last_index {
+            inner.index = idx.min(inner.chunks.len().saturating_sub(1));
         }
+        WebReader { inner }
     }
 
     /// Build a reader from a plain-text source (no markdown syntax).
     #[wasm_bindgen(js_name = fromText)]
-    pub fn from_text(text: &str) -> WebReader {
-        WebReader {
-            inner: Reader::from_blocks(blocks_from_plain_text(text)),
+    pub fn from_text(text: &str, last_index: Option<usize>) -> WebReader {
+        let mut inner = Reader::from_blocks(blocks_from_plain_text(text));
+        if let Some(idx) = last_index {
+            inner.index = idx.min(inner.chunks.len().saturating_sub(1));
         }
+        WebReader { inner }
     }
 
     /// Build a reader from the raw bytes of a .docx file.
     #[wasm_bindgen(js_name = fromDocx)]
-    pub fn from_docx(bytes: &[u8]) -> Result<WebReader, JsError> {
+    pub fn from_docx(bytes: &[u8], last_index: Option<usize>) -> Result<WebReader, JsError> {
         let blocks = parse_docx(bytes).map_err(|e| JsError::new(&e.to_string()))?;
-        Ok(WebReader {
-            inner: Reader::from_blocks(blocks),
-        })
+        let mut inner = Reader::from_blocks(blocks);
+        if let Some(idx) = last_index {
+            inner.index = idx.min(inner.chunks.len().saturating_sub(1));
+        }
+        Ok(WebReader { inner })
     }
 
     pub fn advance(&mut self) {
