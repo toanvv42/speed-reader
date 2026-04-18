@@ -13,6 +13,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  WASM_PACK_VERSION: 0.14.0
 
 jobs:
   build:
@@ -59,7 +60,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        run: cargo install wasm-pack --version ${{ env.WASM_PACK_VERSION }} --locked
 
       - name: Build WASM + inline HTML
         run: ./scripts/build-web.sh
