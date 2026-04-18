@@ -73,6 +73,29 @@ impl Reader {
         let m = self.current().map(|c| c.multiplier).unwrap_or(1.0);
         Duration::from_millis((base_ms * m).max(20.0) as u64)
     }
+
+    pub fn remaining_duration_from(
+        &self,
+        start: usize,
+        wpm: u32,
+        image_pause: Duration,
+    ) -> Duration {
+        if self.chunks.is_empty() || start >= self.chunks.len() {
+            return Duration::ZERO;
+        }
+
+        self.chunks[start..]
+            .iter()
+            .map(|chunk| {
+                if chunk.kind == ChunkKind::Image {
+                    image_pause
+                } else {
+                    let base_ms = 60_000.0 / (wpm.max(1) as f32);
+                    Duration::from_millis((base_ms * chunk.multiplier).max(20.0) as u64)
+                }
+            })
+            .fold(Duration::ZERO, |acc, d| acc.saturating_add(d))
+    }
 }
 
 fn tokenize(blocks: &[Block]) -> Vec<Chunk> {
@@ -243,6 +266,18 @@ mod tests {
         assert_eq!(r.current().map(|c| c.kind), Some(ChunkKind::Image));
         let pause = Duration::from_millis(1234);
         assert_eq!(r.chunk_duration(300, pause), pause);
+    }
+
+    #[test]
+    fn remaining_duration_sums_chunks_from_index() {
+        let r = Reader::from_blocks(vec![Block::Text("one two three".into())]);
+        let all = r.remaining_duration_from(0, 600, Duration::from_secs(3));
+        let tail = r.remaining_duration_from(1, 600, Duration::from_secs(3));
+        assert!(all > tail);
+        assert_eq!(
+            r.remaining_duration_from(999, 600, Duration::from_secs(3)),
+            Duration::ZERO
+        );
     }
 
     #[test]

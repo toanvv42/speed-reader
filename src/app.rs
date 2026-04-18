@@ -258,6 +258,23 @@ impl App {
             .min(idle)
     }
 
+    pub fn reading_time_remaining(&self) -> Duration {
+        if self.reader.chunks.is_empty() || self.reader.at_end() {
+            return Duration::ZERO;
+        }
+
+        let total =
+            self.reader
+                .remaining_duration_from(self.reader.index, self.wpm, self.image_pause);
+
+        if self.mode == Mode::Reading && self.reader.playing {
+            let elapsed_on_chunk = self.last_tick.elapsed();
+            total.saturating_sub(elapsed_on_chunk)
+        } else {
+            total
+        }
+    }
+
     pub fn tick(&mut self) {
         if self.mode != Mode::Reading || !self.reader.playing {
             return;
