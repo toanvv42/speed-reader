@@ -3,7 +3,17 @@
     "allow": [
       "Bash(rustc --version)",
       "Bash(cargo --version)",
-      "Bash(rustup show *)"
+      "Bash(rustup show *)",
+      "Bash(cargo test *)",
+      "Bash(cargo clippy *)",
+      "Bash(cargo check *)",
+      "Bash(wasm-pack --version)",
+      "Bash(bash scripts/build-web.sh)",
+      "Bash(cargo build *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git add *)",
+      "Bash(git push *)",
+      "Bash(gh api *)"
     ]
   }
 }

@@ -350,6 +350,13 @@ impl App {
     }
 }
 
+impl Drop for App {
+    fn drop(&mut self) {
+        self.record_current_location();
+        let _ = self.save_state();
+    }
+}
+
 fn fetch_bytes(agent: &ureq::Agent, src: &str, base_dir: Option<&Path>) -> Result<Vec<u8>> {
     if src.starts_with("http://") || src.starts_with("https://") {
         let resp = agent
