@@ -197,15 +197,28 @@ fn render_status(app: &App, p: &Palette) -> Paragraph<'static> {
         .unwrap_or("—")
         .to_string();
     let msg = app.status_msg.clone().unwrap_or_default();
+    let eta = format_remaining(app.reading_time_remaining());
     let text = if msg.is_empty() {
         format!(
-            " {}  {}  {} wpm  {}/{}   ?help  Ctrl+O open  t theme  q quit ",
-            play, file, app.wpm, idx, total
+            " {}  {}  {} wpm  {}/{}  ⏱ {} left   ?help  Ctrl+O open  t theme  q quit ",
+            play, file, app.wpm, idx, total, eta
         )
     } else {
-        format!(" {}  {}   [{}] ", play, file, msg)
+        format!(" {}  {}  ⏱ {} left   [{}] ", play, file, eta, msg)
     };
     Paragraph::new(text).style(Style::default().fg(p.status_fg).bg(p.status_bg))
+}
+
+fn format_remaining(duration: std::time::Duration) -> String {
+    let secs = duration.as_secs();
+    let minutes = secs / 60;
+    let seconds = secs % 60;
+
+    if minutes > 0 {
+        format!("{}:{:02}", minutes, seconds)
+    } else {
+        format!("0:{:02}", seconds)
+    }
 }
 
 fn draw_picker(f: &mut Frame, app: &App, area: Rect, p: &Palette) {
