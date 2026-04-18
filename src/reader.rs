@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::doc::Block;
+use crate::doc::{Block, SectionStart};
 use crate::text::truncate_end;
 
 pub struct Chunk {
@@ -28,6 +28,13 @@ pub struct Reader {
     pub playing: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct ChapterTarget {
+    pub title: String,
+    pub level: u8,
+    pub chunk_index: usize,
+}
+
 impl Reader {
     pub fn empty() -> Self {
         Self {
@@ -38,7 +45,7 @@ impl Reader {
     }
 
     pub fn from_blocks(blocks: Vec<Block>) -> Self {
-        let chunks = tokenize(&blocks);
+        let (chunks, _) = tokenize_with_block_starts(&blocks);
         Self {
             chunks,
             index: 0,
@@ -98,9 +105,26 @@ impl Reader {
     }
 }
 
-fn tokenize(blocks: &[Block]) -> Vec<Chunk> {
+pub fn chapter_targets(blocks: &[Block], sections: &[SectionStart]) -> Vec<ChapterTarget> {
+    let (_, block_starts) = tokenize_with_block_starts(blocks);
+    sections
+        .iter()
+        .map(|section| ChapterTarget {
+            title: section.title.clone(),
+            level: section.level,
+            chunk_index: block_starts
+                .get(section.block_index)
+                .copied()
+                .unwrap_or_else(|| block_starts.last().copied().unwrap_or(0)),
+        })
+        .collect()
+}
+
+fn tokenize_with_block_starts(blocks: &[Block]) -> (Vec<Chunk>, Vec<usize>) {
     let mut out = Vec::new();
+    let mut starts = Vec::with_capacity(blocks.len());
     for (i, block) in blocks.iter().enumerate() {
+        starts.push(out.len());
         if i > 0 {
             out.push(Chunk {
                 text: String::new(),
@@ -123,7 +147,7 @@ fn tokenize(blocks: &[Block]) -> Vec<Chunk> {
             }),
         }
     }
-    out
+    (out, starts)
 }
 
 fn tokenize_text(out: &mut Vec<Chunk>, text: &str, kind: ChunkKind, base_mult: f32) {
@@ -290,5 +314,47 @@ mod tests {
         r.advance(2);
         assert_eq!(r.current().map(|c| c.kind), Some(ChunkKind::Image));
         assert!(r.playing, "image should auto-advance, not force-pause");
+    }
+
+    #[test]
+    fn chapter_targets_map_heading_blocks_to_chunk_positions() {
+        let blocks = vec![
+            Block::Heading(1, "Intro".into()),
+            Block::Text("alpha beta".into()),
+            Block::Heading(2, "Details".into()),
+            Block::Text("gamma".into()),
+        ];
+        let sections = vec![
+            SectionStart {
+                title: "Intro".into(),
+                level: 1,
+                block_index: 0,
+            },
+            SectionStart {
+                title: "Details".into(),
+                level: 2,
+                block_index: 2,
+            },
+        ];
+
+        let targets = chapter_targets(&blocks, &sections);
+        assert_eq!(targets[0].chunk_index, 0);
+        assert_eq!(targets[1].chunk_index, 4);
+    }
+
+    #[test]
+    fn chapter_targets_follow_tokenizer_rules_for_punctuation_only_words() {
+        let blocks = vec![
+            Block::Text("alpha .......... beta".into()),
+            Block::Heading(1, "Gamma".into()),
+        ];
+        let sections = vec![SectionStart {
+            title: "Gamma".into(),
+            level: 1,
+            block_index: 1,
+        }];
+
+        let targets = chapter_targets(&blocks, &sections);
+        assert_eq!(targets[0].chunk_index, 2);
     }
 }

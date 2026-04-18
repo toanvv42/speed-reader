@@ -1,11 +1,23 @@
 use wasm_bindgen::prelude::*;
 
-use crate::doc::{blocks_from_plain_text, parse_docx, parse_markdown};
-use crate::reader::{ChunkKind, Reader};
+use serde::Deserialize;
+
+use crate::doc::{
+    Block, SectionStart, blocks_from_plain_text, parse_docx, parse_markdown, sections_from_blocks,
+};
+use crate::reader::{ChapterTarget, ChunkKind, Reader, chapter_targets};
 
 #[wasm_bindgen]
 pub struct WebReader {
     inner: Reader,
+    chapters: Vec<ChapterTarget>,
+}
+
+#[derive(Deserialize)]
+struct WebSectionInput {
+    title: String,
+    level: u8,
+    block_index: usize,
 }
 
 #[wasm_bindgen]
@@ -13,32 +25,44 @@ impl WebReader {
     #[wasm_bindgen(constructor)]
     pub fn new(markdown: &str, last_index: Option<usize>) -> WebReader {
         let blocks = parse_markdown(markdown);
-        let mut inner = Reader::from_blocks(blocks);
-        if let Some(idx) = last_index {
-            inner.index = idx.min(inner.chunks.len().saturating_sub(1));
-        }
-        WebReader { inner }
+        Self::from_blocks(blocks, last_index)
     }
 
     /// Build a reader from a plain-text source (no markdown syntax).
     #[wasm_bindgen(js_name = fromText)]
     pub fn from_text(text: &str, last_index: Option<usize>) -> WebReader {
-        let mut inner = Reader::from_blocks(blocks_from_plain_text(text));
-        if let Some(idx) = last_index {
-            inner.index = idx.min(inner.chunks.len().saturating_sub(1));
-        }
-        WebReader { inner }
+        let blocks = blocks_from_plain_text(text);
+        Self::from_blocks_with_sections(blocks, Vec::new(), last_index)
+    }
+
+    /// Build a reader from plain text with precomputed section starts.
+    #[wasm_bindgen(js_name = fromTextWithSections)]
+    pub fn from_text_with_sections(
+        text: &str,
+        sections: JsValue,
+        last_index: Option<usize>,
+    ) -> Result<WebReader, JsError> {
+        let raw_sections: Vec<WebSectionInput> = serde_wasm_bindgen::from_value(sections)
+            .map_err(|e| JsError::new(&format!("invalid sections: {e}")))?;
+        let blocks = blocks_from_plain_text(text);
+        let sections = raw_sections
+            .into_iter()
+            .map(|section| SectionStart {
+                title: section.title,
+                level: section.level,
+                block_index: section.block_index,
+            })
+            .collect();
+        Ok(Self::from_blocks_with_sections(
+            blocks, sections, last_index,
+        ))
     }
 
     /// Build a reader from the raw bytes of a .docx file.
     #[wasm_bindgen(js_name = fromDocx)]
     pub fn from_docx(bytes: &[u8], last_index: Option<usize>) -> Result<WebReader, JsError> {
         let blocks = parse_docx(bytes).map_err(|e| JsError::new(&e.to_string()))?;
-        let mut inner = Reader::from_blocks(blocks);
-        if let Some(idx) = last_index {
-            inner.index = idx.min(inner.chunks.len().saturating_sub(1));
-        }
-        Ok(WebReader { inner })
+        Ok(Self::from_blocks(blocks, last_index))
     }
 
     pub fn advance(&mut self) {
@@ -62,6 +86,12 @@ impl WebReader {
 
     pub fn total(&self) -> usize {
         self.inner.chunks.len()
+    }
+
+    #[wasm_bindgen(js_name = chapters)]
+    pub fn chapters(&self) -> Result<JsValue, JsError> {
+        serde_wasm_bindgen::to_value(&self.chapters)
+            .map_err(|e| JsError::new(&format!("failed to serialize chapters: {e}")))
     }
 
     #[wasm_bindgen(js_name = atEnd)]
@@ -132,5 +162,25 @@ impl WebReader {
             self.inner.index = 0;
         }
         self.inner.playing = !self.inner.playing;
+    }
+}
+
+impl WebReader {
+    fn from_blocks(blocks: Vec<Block>, last_index: Option<usize>) -> WebReader {
+        let sections = sections_from_blocks(&blocks);
+        Self::from_blocks_with_sections(blocks, sections, last_index)
+    }
+
+    fn from_blocks_with_sections(
+        blocks: Vec<Block>,
+        sections: Vec<SectionStart>,
+        last_index: Option<usize>,
+    ) -> WebReader {
+        let chapters = chapter_targets(&blocks, &sections);
+        let mut inner = Reader::from_blocks(blocks);
+        if let Some(idx) = last_index {
+            inner.index = idx.min(inner.chunks.len().saturating_sub(1));
+        }
+        WebReader { inner, chapters }
     }
 }
