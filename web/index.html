@@ -859,6 +859,7 @@ dialog#help-dialog dl {
   font-size: 0.88rem;
   align-items: baseline;
 }
+dialog#help-dialog .touch-only { display: none; }
 dialog#help-dialog dt {
   font-family: var(--sans);
   font-weight: 500;
@@ -988,6 +989,8 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   /* Help dialog */
   dialog#help-dialog { padding: 1.25rem 1.2rem; max-width: calc(100vw - 1rem); }
   dialog#help-dialog dl { grid-template-columns: 7rem 1fr; gap: 0.4rem 0.6rem; font-size: 0.82rem; }
+  dialog#help-dialog .kbd-only { display: none; }
+  dialog#help-dialog .touch-only { display: contents; }
 }
 
 /* Touch hint (hidden on desktop, visible briefly on mobile) */
@@ -1241,13 +1244,19 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   <h3>On reading quickly</h3>
   <p class="dialog-sub">Rapid serial visual presentation — one word at a time, at the pace you choose.</p>
   <dl>
-    <dt><kbd>Space</kbd></dt><dd>play &amp; pause</dd>
-    <dt><kbd>←</kbd> <kbd>→</kbd> / <kbd>h</kbd> <kbd>l</kbd></dt><dd>step by one word</dd>
-    <dt><kbd>↑</kbd> <kbd>↓</kbd> / <kbd>+</kbd> <kbd>−</kbd></dt><dd>adjust reading pace by 25 wpm</dd>
-    <dt><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd>open a file or paste text</dd>
-    <dt><kbd>f</kbd></dt><dd>choose a reading font — saved to this browser</dd>
-    <dt><kbd>t</kbd></dt><dd>cycle through paper, ink, and system themes</dd>
-    <dt><kbd>?</kbd></dt><dd>show or hide this card</dd>
+    <dt class="kbd-only"><kbd>Space</kbd></dt><dd class="kbd-only">play &amp; pause</dd>
+    <dt class="kbd-only"><kbd>←</kbd> <kbd>→</kbd> / <kbd>h</kbd> <kbd>l</kbd></dt><dd class="kbd-only">step by one word</dd>
+    <dt class="kbd-only"><kbd>↑</kbd> <kbd>↓</kbd> / <kbd>+</kbd> <kbd>−</kbd></dt><dd class="kbd-only">adjust reading pace by 25 wpm</dd>
+    <dt class="kbd-only"><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd class="kbd-only">open a file or paste text</dd>
+    <dt class="kbd-only"><kbd>f</kbd></dt><dd class="kbd-only">choose a reading font — saved to this browser</dd>
+    <dt class="kbd-only"><kbd>t</kbd></dt><dd class="kbd-only">cycle through paper, ink, and system themes</dd>
+    <dt class="kbd-only"><kbd>?</kbd></dt><dd class="kbd-only">show or hide this card</dd>
+
+    <dt class="touch-only">Tap</dt><dd class="touch-only">play or pause</dd>
+    <dt class="touch-only">Swipe ← →</dt><dd class="touch-only">step backward or forward one word</dd>
+    <dt class="touch-only">− / + buttons</dt><dd class="touch-only">adjust reading pace by 25 wpm</dd>
+    <dt class="touch-only">Open</dt><dd class="touch-only">load another file or paste text</dd>
+    <dt class="touch-only">Font / Theme</dt><dd class="touch-only">customize readability for this device</dd>
   </dl>
   <button class="close" id="btn-close-help">Close</button>
 </dialog>
