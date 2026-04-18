@@ -2200,7 +2200,7 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "speed-reader"
-version = "0.4.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2214,6 +2214,7 @@ dependencies = [
  "ratatui-image",
  "serde",
  "serde-wasm-bindgen",
+ "serde_json",
  "terminal-light",
  "unicode-segmentation",
  "ureq",
