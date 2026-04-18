@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::doc::Block;
+use crate::doc::{Block, SectionStart};
 use crate::text::truncate_end;
 
 pub struct Chunk {
@@ -26,6 +26,13 @@ pub struct Reader {
     pub chunks: Vec<Chunk>,
     pub index: usize,
     pub playing: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct ChapterTarget {
+    pub title: String,
+    pub level: u8,
+    pub chunk_index: usize,
 }
 
 impl Reader {
@@ -96,6 +103,49 @@ impl Reader {
             })
             .fold(Duration::ZERO, |acc, d| acc.saturating_add(d))
     }
+}
+
+pub fn chapter_targets(blocks: &[Block], sections: &[SectionStart]) -> Vec<ChapterTarget> {
+    let block_starts = block_chunk_starts(blocks);
+    sections
+        .iter()
+        .map(|section| ChapterTarget {
+            title: section.title.clone(),
+            level: section.level,
+            chunk_index: block_starts
+                .get(section.block_index)
+                .copied()
+                .unwrap_or_else(|| block_starts.last().copied().unwrap_or(0)),
+        })
+        .collect()
+}
+
+fn block_chunk_starts(blocks: &[Block]) -> Vec<usize> {
+    let mut starts = Vec::with_capacity(blocks.len());
+    let mut next_chunk = 0;
+    for (i, block) in blocks.iter().enumerate() {
+        starts.push(next_chunk);
+        next_chunk += block_chunk_len(block);
+        if i + 1 < blocks.len() {
+            next_chunk += 1;
+        }
+    }
+    starts
+}
+
+fn block_chunk_len(block: &Block) -> usize {
+    match block {
+        Block::Text(text) => text_chunk_len(text),
+        Block::Heading(_, text) => text_chunk_len(text),
+        Block::Code(text) => text_chunk_len(text),
+        Block::Image(_) => 1,
+    }
+}
+
+fn text_chunk_len(text: &str) -> usize {
+    text.split_whitespace()
+        .filter(|word| !word.trim_matches(|c| c == '.' || c == ',').is_empty())
+        .count()
 }
 
 fn tokenize(blocks: &[Block]) -> Vec<Chunk> {
@@ -290,5 +340,31 @@ mod tests {
         r.advance(2);
         assert_eq!(r.current().map(|c| c.kind), Some(ChunkKind::Image));
         assert!(r.playing, "image should auto-advance, not force-pause");
+    }
+
+    #[test]
+    fn chapter_targets_map_heading_blocks_to_chunk_positions() {
+        let blocks = vec![
+            Block::Heading(1, "Intro".into()),
+            Block::Text("alpha beta".into()),
+            Block::Heading(2, "Details".into()),
+            Block::Text("gamma".into()),
+        ];
+        let sections = vec![
+            SectionStart {
+                title: "Intro".into(),
+                level: 1,
+                block_index: 0,
+            },
+            SectionStart {
+                title: "Details".into(),
+                level: 2,
+                block_index: 2,
+            },
+        ];
+
+        let targets = chapter_targets(&blocks, &sections);
+        assert_eq!(targets[0].chunk_index, 0);
+        assert_eq!(targets[1].chunk_index, 5);
     }
 }

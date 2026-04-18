@@ -10,7 +10,7 @@ use ratatui_image::protocol::StatefulProtocol;
 use serde::{Deserialize, Serialize};
 
 use speed_reader::doc::Block;
-use speed_reader::reader::Reader;
+use speed_reader::reader::{ChapterTarget, Reader};
 use speed_reader::theme::{Theme, ThemeChoice};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -33,6 +33,8 @@ pub enum Action {
     WpmDown,
     OpenPicker,
     ClosePicker,
+    OpenChapterPicker,
+    CloseChapterPicker,
     ToggleHelp,
     CycleTheme,
     PickerInput(char),
@@ -40,12 +42,18 @@ pub enum Action {
     PickerUp,
     PickerDown,
     PickerConfirm,
+    ChapterInput(char),
+    ChapterBackspace,
+    ChapterUp,
+    ChapterDown,
+    ChapterConfirm,
 }
 
 #[derive(PartialEq, Eq)]
 pub enum Mode {
     Reading,
     Picker,
+    ChapterPicker,
     Help,
 }
 
@@ -56,6 +64,8 @@ pub struct App {
     pub wpm: u32,
     pub file_path: Option<PathBuf>,
     pub picker: FilePicker,
+    pub chapters: Vec<ChapterTarget>,
+    pub chapter_picker: ChapterPicker,
     last_tick: Instant,
     pub status_msg: Option<String>,
     image_picker: ImagePicker,
@@ -79,6 +89,12 @@ pub struct FilePicker {
     pub cwd: PathBuf,
 }
 
+pub struct ChapterPicker {
+    pub query: String,
+    pub filtered: Vec<usize>,
+    pub selected: usize,
+}
+
 impl App {
     pub fn new(
         image_picker: ImagePicker,
@@ -98,6 +114,8 @@ impl App {
             wpm: 300,
             file_path: None,
             picker: FilePicker::new(),
+            chapters: Vec::new(),
+            chapter_picker: ChapterPicker::new(),
             last_tick: Instant::now(),
             status_msg: None,
             image_picker,
@@ -166,7 +184,7 @@ impl App {
         self.record_current_location();
         let _ = self.save_state();
 
-        let blocks = speed_reader::doc::load(path)?;
+        let doc = speed_reader::doc::load(path)?;
         let base_dir = path.parent().map(|p| p.to_path_buf());
 
         self.image_cache.clear();
@@ -174,7 +192,7 @@ impl App {
         self.failed_count = 0;
 
         let mut seen: HashSet<String> = HashSet::new();
-        for block in &blocks {
+        for block in &doc.blocks {
             if let Block::Image(url) = block {
                 if !seen.insert(url.clone()) {
                     continue;
@@ -191,7 +209,9 @@ impl App {
             }
         }
 
-        self.reader = Reader::from_blocks(blocks);
+        self.chapters = speed_reader::reader::chapter_targets(&doc.blocks, &doc.sections);
+        self.chapter_picker.reset(self.chapters.len());
+        self.reader = Reader::from_blocks(doc.blocks);
         self.file_path = Some(path.to_path_buf());
 
         // Restore location
@@ -327,6 +347,18 @@ impl App {
             Action::ClosePicker => {
                 self.mode = Mode::Reading;
             }
+            Action::OpenChapterPicker => {
+                self.reader.playing = false;
+                if self.chapters.is_empty() {
+                    self.status_msg = Some("no chapters found".into());
+                } else {
+                    self.chapter_picker.reset(self.chapters.len());
+                    self.mode = Mode::ChapterPicker;
+                }
+            }
+            Action::CloseChapterPicker => {
+                self.mode = Mode::Reading;
+            }
             Action::ToggleHelp => {
                 self.mode = match self.mode {
                     Mode::Help => Mode::Reading,
@@ -362,6 +394,26 @@ impl App {
                             }
                         }
                     }
+                }
+            }
+            Action::ChapterInput(c) => {
+                self.chapter_picker.query.push(c);
+                self.chapter_picker.refilter(&self.chapters);
+            }
+            Action::ChapterBackspace => {
+                self.chapter_picker.query.pop();
+                self.chapter_picker.refilter(&self.chapters);
+            }
+            Action::ChapterUp => self.chapter_picker.move_up(),
+            Action::ChapterDown => self.chapter_picker.move_down(),
+            Action::ChapterConfirm => {
+                if let Some(target) = self.chapter_picker.selected_target(&self.chapters) {
+                    self.reader.index = target
+                        .chunk_index
+                        .min(self.reader.chunks.len().saturating_sub(1));
+                    self.last_tick = Instant::now();
+                    self.mode = Mode::Reading;
+                    self.status_msg = Some(format!("chapter: {}", target.title));
                 }
             }
         }
@@ -480,5 +532,52 @@ impl FilePicker {
 
     pub fn is_parent(&self, p: &Path) -> bool {
         self.cwd.parent() == Some(p)
+    }
+}
+
+impl ChapterPicker {
+    pub fn new() -> Self {
+        Self {
+            query: String::new(),
+            filtered: Vec::new(),
+            selected: 0,
+        }
+    }
+
+    pub fn reset(&mut self, len: usize) {
+        self.query.clear();
+        self.filtered = (0..len).collect();
+        self.selected = 0;
+    }
+
+    pub fn refilter(&mut self, chapters: &[ChapterTarget]) {
+        let query = self.query.to_lowercase();
+        self.filtered = chapters
+            .iter()
+            .enumerate()
+            .filter(|(_, chapter)| {
+                query.is_empty() || chapter.title.to_lowercase().contains(&query)
+            })
+            .map(|(i, _)| i)
+            .collect();
+        self.selected = 0;
+    }
+
+    pub fn move_up(&mut self) {
+        if self.selected > 0 {
+            self.selected -= 1;
+        }
+    }
+
+    pub fn move_down(&mut self) {
+        if self.selected + 1 < self.filtered.len() {
+            self.selected += 1;
+        }
+    }
+
+    pub fn selected_target<'a>(&self, chapters: &'a [ChapterTarget]) -> Option<&'a ChapterTarget> {
+        self.filtered
+            .get(self.selected)
+            .and_then(|&index| chapters.get(index))
     }
 }

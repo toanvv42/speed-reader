@@ -882,7 +882,8 @@ dialog#help-dialog dd {
   color: var(--ink-soft);
   margin: 0;
 }
-dialog#help-dialog button.close {
+dialog#help-dialog button.close,
+dialog#chapter-dialog button.close {
   margin-top: 1.5rem;
   background: var(--ink);
   border: 1px solid var(--ink);
@@ -895,7 +896,123 @@ dialog#help-dialog button.close {
   font-size: 0.85rem;
   transition: background-color 180ms ease;
 }
-dialog#help-dialog button.close:hover { background: var(--ink-soft); border-color: var(--ink-soft); }
+dialog#help-dialog button.close:hover,
+dialog#chapter-dialog button.close:hover {
+  background: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
+
+/* ─────────── Chapter dialog ─────────── */
+dialog#chapter-dialog {
+  background: var(--paper-raised);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 560px;
+  width: calc(100% - 2rem);
+  box-shadow:
+    0 0 0 6px var(--paper-deep),
+    var(--shadow-lg);
+  font-family: var(--sans);
+}
+dialog#chapter-dialog::backdrop {
+  background: rgba(26, 22, 18, 0.35);
+  backdrop-filter: blur(3px);
+}
+dialog#chapter-dialog h3 {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.4rem;
+  margin-bottom: 0.25rem;
+}
+dialog#chapter-dialog .dialog-sub {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  margin-bottom: 1rem;
+}
+#chapter-search {
+  width: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.72rem 0.85rem;
+  font: inherit;
+  outline: none;
+}
+#chapter-search:focus {
+  border-color: var(--accent-soft);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+#chapter-count {
+  margin-top: 0.7rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+#chapter-list {
+  margin-top: 0.9rem;
+  max-height: min(52vh, 420px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+#chapter-list button {
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+#chapter-list button:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-1px);
+}
+#chapter-list button.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+#chapter-list button.active .chapter-title::after {
+  content: " current";
+  font-size: 0.72rem;
+  color: var(--accent);
+  margin-left: 0.45rem;
+}
+#chapter-list .chapter-title {
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  padding-left: calc(var(--chapter-level, 1) * 0.85rem - 0.85rem);
+}
+#chapter-list .chapter-meta {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  color: var(--ink-dim);
+  padding-left: calc(var(--chapter-level, 1) * 0.85rem - 0.85rem);
+}
+#chapter-empty {
+  margin-top: 0.9rem;
+  padding: 1rem;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 9px;
+  color: var(--ink-dim);
+  font-family: var(--serif);
+  font-style: italic;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
 
 /* ─────────── Responsive tweaks ─────────── */
 @media (max-width: 879px) {
@@ -939,7 +1056,7 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
     gap: 0.3rem;
     font-size: 0.72rem;
     display: grid;
-    grid-template-columns: auto auto 1fr auto auto;
+    grid-template-columns: auto auto 1fr auto auto auto;
     grid-template-rows: auto auto;
     justify-items: center;
     align-items: center;
@@ -966,12 +1083,13 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   #btn-wpm-up   { grid-column: 4; grid-row: 1; }
   #btn-next     { grid-column: 5; grid-row: 1; }
 
-  /* Row 2: open | wpm | progress | font | theme | help */
+  /* Row 2: open | wpm | progress | chapters | font | theme */
   #btn-open     { grid-column: 1; grid-row: 2; }
   #wpm-display  { grid-column: 2; grid-row: 2; }
   #progress     { grid-column: 3; grid-row: 2; }
-  .font-picker  { grid-column: 4; grid-row: 2; }
-  #btn-theme    { grid-column: 5; grid-row: 2; }
+  #btn-chapters { grid-column: 4; grid-row: 2; }
+  .font-picker  { grid-column: 5; grid-row: 2; }
+  #btn-theme    { grid-column: 6; grid-row: 2; }
   #btn-help     { display: none; }
 
   /* Font menu: full-width bottom sheet on mobile */
@@ -998,6 +1116,14 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   }
   dialog#help-dialog .kbd-only { display: none; }
   dialog#help-dialog .touch-only { display: block; }
+
+  dialog#chapter-dialog {
+    padding: 1.15rem 1rem;
+    max-width: calc(100vw - 1rem);
+  }
+  #chapter-list {
+    max-height: min(56vh, 360px);
+  }
 }
 
 /* Touch hint (hidden on desktop, visible briefly on mobile) */
@@ -1086,6 +1212,13 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   <span id="progress">0<em>/</em>0</span>
 
   <span class="divider"></span>
+
+  <button id="btn-chapters" title="Chapters (c)" aria-label="Open chapters" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 5h12M6 12h12M6 19h12"/>
+      <path d="M4 5h.01M4 12h.01M4 19h.01"/>
+    </svg>
+  </button>
 
   <span class="font-picker">
     <button id="btn-font" title="Choose reading font (f)" aria-label="Choose reading font" aria-haspopup="true" aria-expanded="false">Aa</button>
@@ -1238,6 +1371,7 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
           <kbd>Space</kbd><span>play</span>
           <kbd>←</kbd><kbd>→</kbd><span>step</span>
           <kbd>↑</kbd><kbd>↓</kbd><span>wpm</span>
+          <kbd>c</kbd><span>chapters</span>
           <kbd>?</kbd><span>help</span>
         </div>
       </div>
@@ -1255,6 +1389,7 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
     <dt class="kbd-only"><kbd>←</kbd> <kbd>→</kbd> / <kbd>h</kbd> <kbd>l</kbd></dt><dd class="kbd-only">step by one word</dd>
     <dt class="kbd-only"><kbd>↑</kbd> <kbd>↓</kbd> / <kbd>+</kbd> <kbd>−</kbd></dt><dd class="kbd-only">adjust reading pace by 25 wpm</dd>
     <dt class="kbd-only"><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd class="kbd-only">open a file or paste text</dd>
+    <dt class="kbd-only"><kbd>c</kbd></dt><dd class="kbd-only">open chapter picker when headings are available</dd>
     <dt class="kbd-only"><kbd>f</kbd></dt><dd class="kbd-only">choose a reading font — saved to this browser</dd>
     <dt class="kbd-only"><kbd>t</kbd></dt><dd class="kbd-only">cycle through paper, ink, and system themes</dd>
     <dt class="kbd-only"><kbd>?</kbd></dt><dd class="kbd-only">show or hide this card</dd>
@@ -1268,6 +1403,18 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   <button class="close" id="btn-close-help">Close</button>
 </dialog>
 
+<dialog id="chapter-dialog">
+  <h3>Jump to chapter</h3>
+  <p class="dialog-sub">Pick a heading, chapter, or section and resume from there.</p>
+  <input id="chapter-search" type="text" placeholder="Filter chapters…" autocomplete="off">
+  <div id="chapter-count">0 chapters</div>
+  <div id="chapter-empty" hidden>No chapter markers were found for this document.</div>
+  <div id="chapter-list" role="listbox" aria-label="Chapters"></div>
+  <div class="dialog-actions">
+    <button class="close" id="btn-close-chapters">Close</button>
+  </div>
+</dialog>
+
 <script type="module">
 // WASM_INLINE_MARKER: this block gets replaced by the build script
 import init, { WebReader } from './pkg/speed_reader.js';
@@ -1278,7 +1425,7 @@ await init();
 const pdfjsLib = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.min.mjs');
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.worker.min.mjs';
 
-async function extractPdfText(arrayBuffer) {
+async function extractPdfData(arrayBuffer) {
   const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages = [];
   for (let i = 1; i <= doc.numPages; i++) {
@@ -1286,10 +1433,87 @@ async function extractPdfText(arrayBuffer) {
     const content = await page.getTextContent();
     pages.push(content.items.map(item => item.str).join(' '));
   }
-  return pages.join('\n\n');
+  return {
+    text: pages.join('\n\n'),
+    sections: await extractPdfSections(doc, pages),
+  };
+}
+
+async function extractPdfSections(doc, pages) {
+  const outline = await doc.getOutline();
+  if (outline?.length) {
+    const sections = [];
+    await collectPdfOutlineSections(doc, outline, 1, sections);
+    const deduped = dedupePdfSections(sections, pages.length);
+    if (deduped.length) return deduped;
+  }
+  return inferPdfSectionsFromPages(pages);
+}
+
+async function collectPdfOutlineSections(doc, items, level, sections) {
+  for (const item of items || []) {
+    const title = (item.title || '').replace(/\s+/g, ' ').trim();
+    const pageIndex = await resolvePdfDestinationPage(doc, item.dest);
+    if (title && Number.isInteger(pageIndex) && pageIndex >= 0) {
+      sections.push({ title, level, block_index: pageIndex });
+    }
+    if (item.items?.length) {
+      await collectPdfOutlineSections(doc, item.items, level + 1, sections);
+    }
+  }
+}
+
+async function resolvePdfDestinationPage(doc, dest) {
+  let resolved = dest;
+  if (typeof resolved === 'string') {
+    resolved = await doc.getDestination(resolved);
+  }
+  if (!Array.isArray(resolved) || resolved.length === 0) return null;
+  const target = resolved[0];
+  if (Number.isInteger(target)) return target;
+  if (target && typeof target === 'object' && 'num' in target && 'gen' in target) {
+    return doc.getPageIndex(target);
+  }
+  return null;
+}
+
+function dedupePdfSections(sections, pageCount) {
+  const seen = new Set();
+  return sections.filter(section => {
+    if (!Number.isInteger(section.block_index)) return false;
+    if (section.block_index < 0 || section.block_index >= pageCount) return false;
+    const key = `${section.title}|${section.level}|${section.block_index}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function inferPdfSectionsFromPages(pages) {
+  return pages.flatMap((pageText, index) => {
+    const title = inferPdfSectionTitle(pageText);
+    return title ? [{ title, level: 1, block_index: index }] : [];
+  });
+}
+
+function inferPdfSectionTitle(pageText) {
+  const compact = pageText.replace(/\s+/g, ' ').trim();
+  if (!compact) return null;
+  const sample = compact.slice(0, 140);
+  for (const pattern of [
+    /^chapter\s+\d+\b[^.!?]{0,90}/i,
+    /^part\s+[ivxlcdm]+\b[^.!?]{0,90}/i,
+    /^\d+\.\s+[A-Z][^.!?]{0,90}/,
+  ]) {
+    const match = sample.match(pattern);
+    if (match) return match[0].trim();
+  }
+  return null;
 }
 
 let reader = null;
+let chapters = [];
+let chapterSelection = 0;
 let wpm = 300;
 let imagePauseMs = 3000;
 let timer = null;
@@ -1326,6 +1550,12 @@ const $progressBar = document.getElementById('progress-bar');
 const $overlay = document.getElementById('input-overlay');
 const $mdInput = document.getElementById('md-input');
 const $help = document.getElementById('help-dialog');
+const $chapterDialog = document.getElementById('chapter-dialog');
+const $chapterSearch = document.getElementById('chapter-search');
+const $chapterCount = document.getElementById('chapter-count');
+const $chapterEmpty = document.getElementById('chapter-empty');
+const $chapterList = document.getElementById('chapter-list');
+const $chapterButton = document.getElementById('btn-chapters');
 const $card = document.getElementById('input-box');
 const $loadError = document.getElementById('load-error');
 
@@ -1359,8 +1589,120 @@ function formatRemaining(ms) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+function normalizeChapters(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(chapter =>
+      chapter
+      && typeof chapter.title === 'string'
+      && Number.isInteger(chapter.level)
+      && Number.isInteger(chapter.chunk_index)
+    )
+    .map(chapter => ({
+      title: chapter.title.trim(),
+      level: Math.max(1, chapter.level),
+      chunk_index: Math.max(0, chapter.chunk_index),
+    }));
+}
+
+function filteredChapters() {
+  const query = $chapterSearch.value.trim().toLowerCase();
+  return chapters
+    .map((chapter, sourceIndex) => ({ ...chapter, sourceIndex }))
+    .filter(chapter => !query || chapter.title.toLowerCase().includes(query));
+}
+
+function currentChapterSourceIndex() {
+  if (!reader || !chapters.length) return -1;
+  const currentIndex = reader.index();
+  let active = -1;
+  for (let i = 0; i < chapters.length; i++) {
+    if (chapters[i].chunk_index <= currentIndex) active = i;
+    else break;
+  }
+  return active;
+}
+
+function syncChapterButton() {
+  const hasChapters = chapters.length > 0;
+  $chapterButton.hidden = !hasChapters;
+  $chapterButton.disabled = !hasChapters;
+  if (!hasChapters && $chapterDialog.open) {
+    $chapterDialog.close();
+  }
+}
+
+function renderChapterList() {
+  const filtered = filteredChapters();
+  if (!filtered.length) {
+    $chapterCount.textContent = chapters.length
+      ? 'No chapters match your filter'
+      : '0 chapters';
+    $chapterEmpty.hidden = chapters.length > 0;
+    $chapterList.innerHTML = '';
+    chapterSelection = 0;
+    return filtered;
+  }
+
+  $chapterEmpty.hidden = true;
+  $chapterCount.textContent = `${filtered.length} of ${chapters.length} chapters`;
+  chapterSelection = Math.max(0, Math.min(chapterSelection, filtered.length - 1));
+  const activeSourceIndex = currentChapterSourceIndex();
+
+  $chapterList.innerHTML = filtered.map((chapter, filteredIndex) => `
+    <button
+      type="button"
+      class="chapter-item ${filteredIndex === chapterSelection ? 'selected' : ''} ${chapter.sourceIndex === activeSourceIndex ? 'active' : ''}"
+      data-filtered-index="${filteredIndex}"
+      style="--chapter-level:${chapter.level}"
+    >
+      <span class="chapter-title">${esc(chapter.title)}</span>
+      <span class="chapter-meta">Jump to ${chapter.level === 1 ? 'chapter' : 'section'}</span>
+    </button>
+  `).join('');
+
+  $chapterList.querySelectorAll('.chapter-item').forEach(button => {
+    button.addEventListener('click', () => {
+      jumpToFilteredChapter(Number(button.dataset.filteredIndex));
+    });
+  });
+  return filtered;
+}
+
+function openChapterDialog() {
+  if (!chapters.length || !reader) return;
+  stopTimer();
+  reader.setPlaying(false);
+  render();
+  $chapterSearch.value = '';
+  chapterSelection = Math.max(0, currentChapterSourceIndex());
+  renderChapterList();
+  $chapterDialog.showModal();
+  requestAnimationFrame(() => {
+    $chapterSearch.focus();
+    $chapterSearch.select();
+  });
+}
+
+function closeChapterDialog() {
+  if ($chapterDialog.open) $chapterDialog.close();
+}
+
+function jumpToFilteredChapter(filteredIndex) {
+  const filtered = filteredChapters();
+  const chapter = filtered[filteredIndex];
+  if (!chapter || !reader) return;
+  chapterSelection = filteredIndex;
+  reader.setIndex(chapter.chunk_index);
+  closeChapterDialog();
+  enterRsvpMode();
+  render();
+}
+
 function render() {
   if (!reader || reader.total() === 0) {
+    chapters = [];
+    syncChapterButton();
     $word.textContent = '';
     $hint.textContent = '';
     $img.style.display = 'none';
@@ -1466,15 +1808,18 @@ function enterRsvpMode() {
 }
 
 function exitRsvpMode() {
+  closeChapterDialog();
   document.body.classList.remove('rsvp');
   $overlay.classList.remove('hidden');
   $mdInput.focus();
 }
 
-function setReader(newReader) {
+function setReader(newReader, nextChapters = []) {
   stopTimer();
   if (reader) reader.free();
   reader = newReader;
+  chapters = normalizeChapters(nextChapters);
+  syncChapterButton();
   $loadError.style.display = 'none';
   enterRsvpMode();
   render();
@@ -1497,14 +1842,16 @@ async function loadMarkdown(md) {
   const encoder = new TextEncoder();
   currentFileHash = await getFileHash(encoder.encode(md));
   const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
-  setReader(new WebReader(md, lastIdx));
+  const webReader = new WebReader(md, lastIdx);
+  setReader(webReader, webReader.chapters());
 }
 
 async function loadPlainText(text) {
   const encoder = new TextEncoder();
   currentFileHash = await getFileHash(encoder.encode(text));
   const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
-  setReader(WebReader.fromText(text, lastIdx));
+  const webReader = WebReader.fromText(text, lastIdx);
+  setReader(webReader, webReader.chapters());
 }
 
 async function loadFile(file) {
@@ -1522,15 +1869,17 @@ async function loadFile(file) {
       const buf = await file.arrayBuffer();
       currentFileHash = await getFileHash(new Uint8Array(buf));
       const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
-      setReader(WebReader.fromDocx(new Uint8Array(buf), lastIdx));
+      const webReader = WebReader.fromDocx(new Uint8Array(buf), lastIdx);
+      setReader(webReader, webReader.chapters());
     } else if (name.endsWith('.pdf')) {
       const buf = await file.arrayBuffer();
       currentFileHash = await getFileHash(new Uint8Array(buf));
-      const text = await extractPdfText(buf);
+      const { text, sections } = await extractPdfData(buf);
       $mdInput.value = text;
       // For PDF, we hash the source bytes to identify it, but use the extracted text.
       const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
-      setReader(WebReader.fromText(text, lastIdx));
+      const webReader = WebReader.fromTextWithSections(text, sections, lastIdx);
+      setReader(webReader, webReader.chapters());
     } else {
       const text = await file.text();
       $mdInput.value = text;
@@ -1575,6 +1924,7 @@ document.getElementById('btn-open').addEventListener('click', () => {
   if (reader) reader.setPlaying(false);
   exitRsvpMode();
 });
+document.getElementById('btn-chapters').addEventListener('click', openChapterDialog);
 
 document.getElementById('btn-load').addEventListener('click', () => {
   const md = $mdInput.value.trim();
@@ -1594,6 +1944,11 @@ document.getElementById('btn-help').addEventListener('click', () => {
 });
 document.getElementById('btn-close-help').addEventListener('click', () => {
   $help.close();
+});
+document.getElementById('btn-close-chapters').addEventListener('click', closeChapterDialog);
+$chapterSearch.addEventListener('input', () => {
+  chapterSelection = 0;
+  renderChapterList();
 });
 
 function applyTheme() {
@@ -1719,6 +2074,35 @@ document.addEventListener('drop', async e => {
 
 // --- Keyboard shortcuts ---
 document.addEventListener('keydown', e => {
+  if ($chapterDialog.open) {
+    const filtered = renderChapterList();
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeChapterDialog();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (filtered.length) {
+        chapterSelection = Math.min(chapterSelection + 1, filtered.length - 1);
+        renderChapterList();
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (filtered.length) {
+        chapterSelection = Math.max(chapterSelection - 1, 0);
+        renderChapterList();
+      }
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filtered.length) jumpToFilteredChapter(chapterSelection);
+      return;
+    }
+  }
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
     if (e.key === 'Escape' && reader) { enterRsvpMode(); render(); }
     return;
@@ -1748,6 +2132,9 @@ document.addEventListener('keydown', e => {
       break;
     case 'o':
       if (!e.ctrlKey) { stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }
+      break;
+    case 'c':
+      openChapterDialog();
       break;
     case 'O':
       if (e.ctrlKey) { e.preventDefault(); stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }

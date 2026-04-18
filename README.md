@@ -15,6 +15,7 @@ Kitty / Sixel graphics), but falls back to half-blocks on plainer terms.
 - RSVP playback of markdown files (headings, paragraphs, code blocks)
 - Inline images — local paths and `http(s)://` URLs, rendered via the
   terminal's native graphics protocol when available
+- Chapter / section picker (`c`) to jump directly into a document
 - Dark / light / **system** themes (auto-detects terminal background via OSC 11)
 - Fuzzy-ish file picker (`o`) to open another file without leaving the TUI
 - Adjustable WPM from 50 to 1500 (steps of 25, default 300)
@@ -74,12 +75,14 @@ If no path is given, press `o` to open the file picker.
 | `← →` / `h l`    | step one word                      |
 | `↑ ↓` / `+ -`    | WPM ± 25                           |
 | `o`              | open file picker                   |
+| `c`              | open chapter picker                |
 | `t`              | cycle theme (dark · light · system) |
 | `?`              | toggle help                        |
 | `q` / `Esc`      | quit                               |
 
-In the picker: `↑ ↓` move, `Enter` open/descend, `Backspace` edit query,
-`Esc` cancel. When an image block is reached, `Space` or `→` advances past it.
+In the pickers: `↑ ↓` move, `Enter` confirm, `Backspace` edit query,
+`Esc` cancel. The file picker uses `Enter` to open/descend. When an image block
+is reached, `Space` or `→` advances past it.
 
 ## Building
 

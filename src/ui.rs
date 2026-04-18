@@ -25,6 +25,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     match app.mode {
         Mode::Picker => draw_picker(f, app, size, &palette),
+        Mode::ChapterPicker => draw_chapter_picker(f, app, size, &palette),
         Mode::Help => draw_help(f, size, &palette),
         Mode::Reading => {}
     }
@@ -200,7 +201,7 @@ fn render_status(app: &App, p: &Palette) -> Paragraph<'static> {
     let eta = format_remaining(app.reading_time_remaining());
     let text = if msg.is_empty() {
         format!(
-            " {}  {}  {} wpm  {}/{}  ⏱ {} left   ?help  Ctrl+O open  t theme  q quit ",
+            " {}  {}  {} wpm  {}/{}  ⏱ {} left   c chapters  ?help  Ctrl+O open  t theme  q quit ",
             play, file, app.wpm, idx, total, eta
         )
     } else {
@@ -314,6 +315,7 @@ fn draw_help(f: &mut Frame, area: Rect, p: &Palette) {
         Line::from("  ← → h l    step word"),
         Line::from("  ↑ ↓ + -    WPM ±25"),
         Line::from("  Ctrl+O o   open file"),
+        Line::from("  c          open chapter picker"),
         Line::from("  t          cycle theme (dark · light · system)"),
         Line::from("  ?          toggle this help"),
         Line::from("  q / Esc    quit"),
@@ -332,4 +334,65 @@ fn draw_help(f: &mut Frame, area: Rect, p: &Palette) {
         .style(Style::default().fg(p.fg))
         .wrap(Wrap { trim: false });
     f.render_widget(para, rect);
+}
+
+fn draw_chapter_picker(f: &mut Frame, app: &App, area: Rect, p: &Palette) {
+    let w = (area.width.saturating_sub(6)).clamp(36, 84);
+    let h = (area.height.saturating_sub(4)).clamp(10, 24);
+    let x = area.width.saturating_sub(w) / 2;
+    let y = area.height.saturating_sub(h) / 2;
+    let rect = Rect::new(x, y, w, h);
+
+    f.render_widget(Clear, rect);
+
+    let block = Block::default()
+        .title(" Jump to chapter ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(p.accent))
+        .style(Style::default().bg(p.modal_bg).fg(p.fg));
+    let inner = block.inner(rect);
+    f.render_widget(block, rect);
+
+    let rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Min(1),
+        ])
+        .split(inner);
+
+    let query =
+        Paragraph::new(format!("› {}_", app.chapter_picker.query)).style(Style::default().fg(p.fg));
+    f.render_widget(query, rows[0]);
+
+    let divider =
+        Paragraph::new("─".repeat(inner.width as usize)).style(Style::default().fg(p.divider));
+    f.render_widget(divider, rows[1]);
+
+    let items: Vec<ListItem> = app
+        .chapter_picker
+        .filtered
+        .iter()
+        .map(|&i| {
+            let chapter = &app.chapters[i];
+            let indent = "  ".repeat(chapter.level.saturating_sub(1) as usize);
+            ListItem::new(format!("{indent}{}", chapter.title))
+        })
+        .collect();
+
+    let list = List::new(items)
+        .highlight_style(
+            Style::default()
+                .bg(p.list_hl_bg)
+                .fg(p.accent)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol("› ");
+
+    let mut state = ListState::default();
+    if !app.chapter_picker.filtered.is_empty() {
+        state.select(Some(app.chapter_picker.selected));
+    }
+    f.render_stateful_widget(list, rows[2], &mut state);
 }
