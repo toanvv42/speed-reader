@@ -865,6 +865,7 @@ dialog#help-dialog dt {
   font-weight: 500;
   color: var(--ink);
   letter-spacing: 0.02em;
+  margin: 0;
 }
 dialog#help-dialog dt kbd {
   font-family: var(--sans);
@@ -879,6 +880,7 @@ dialog#help-dialog dd {
   font-family: var(--serif);
   font-style: italic;
   color: var(--ink-soft);
+  margin: 0;
 }
 dialog#help-dialog button.close {
   margin-top: 1.5rem;
@@ -988,9 +990,14 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
 
   /* Help dialog */
   dialog#help-dialog { padding: 1.25rem 1.2rem; max-width: calc(100vw - 1rem); }
-  dialog#help-dialog dl { grid-template-columns: 7rem 1fr; gap: 0.4rem 0.6rem; font-size: 0.82rem; }
+  dialog#help-dialog dl {
+    grid-template-columns: minmax(6.5rem, max-content) minmax(0, 1fr);
+    gap: 0.45rem 0.65rem;
+    font-size: 0.82rem;
+    align-items: start;
+  }
   dialog#help-dialog .kbd-only { display: none; }
-  dialog#help-dialog .touch-only { display: contents; }
+  dialog#help-dialog .touch-only { display: block; }
 }
 
 /* Touch hint (hidden on desktop, visible briefly on mobile) */
