@@ -1091,75 +1091,71 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
     <!-- Hero illustration: a boy reading under a tree -->
     <aside class="hero-illustration" aria-hidden="true">
       <svg class="boy-tree" viewBox="0 0 500 640" xmlns="http://www.w3.org/2000/svg">
-        <!-- Horizon -->
-        <path class="stroke-soft" d="M 26 514 C 142 504, 356 522, 474 510"/>
-        <path class="stroke-dim" style="opacity:.45" d="M 96 522 C 188 510, 308 532, 420 518"/>
+        <!-- Ground + distant contour -->
+        <path class="stroke-soft" d="M 18 514 C 124 504, 360 522, 482 510"/>
+        <path class="stroke-dim" style="opacity:.36" d="M 90 524 C 182 514, 326 530, 436 520"/>
 
-        <!-- Quiet sky details -->
-        <circle class="fill-ink-wash" cx="108" cy="124" r="20"/>
-        <path class="stroke-dim" style="opacity:.55" d="M 64 176 q 20 -8 40 0"/>
-        <path class="stroke-dim" style="opacity:.4" d="M 54 196 q 28 -9 56 0"/>
+        <!-- Soft atmospheric marks -->
+        <path class="stroke-dim" style="opacity:.45" d="M 42 174 q 20 -8 42 0"/>
+        <path class="stroke-dim" style="opacity:.3" d="M 34 196 q 30 -10 62 0"/>
+        <circle class="fill-ink-wash" cx="94" cy="118" r="17"/>
 
-        <!-- Grass tufts -->
-        <path class="stroke-dim" d="M 70 512 l -2 -9 M 76 512 l 0 -7 M 82 512 l 2 -9"/>
-        <path class="stroke-dim" d="M 424 512 l -2 -10 M 430 512 l 0 -8 M 436 512 l 2 -10"/>
-        <path class="stroke-dim" d="M 154 514 l -1 -6 M 159 515 l 1 -5"/>
+        <!-- Subtle stars / sparks -->
+        <path class="stroke-soft" style="stroke-width:1.4" d="M 130 96 l 0 11 m -5 -5.5 l 10 0"/>
+        <path class="stroke-soft" style="stroke-width:1.1" d="M 426 88 l 0 7 m -3 -3.5 l 6 0"/>
+        <path class="stroke-soft" style="stroke-width:1.1" d="M 70 246 l 0 6 m -3 -3 l 6 0"/>
 
-        <!-- Canopy cluster -->
+        <!-- Tree canopy -->
         <g class="breeze">
-          <path class="fill-ink-wash" d="M 346 128 C 292 100, 226 118, 224 182 C 186 172, 164 214, 202 244 C 182 274, 226 310, 276 292 C 308 326, 364 314, 374 272 C 414 266, 428 220, 396 194 C 414 154, 382 122, 346 128 Z"/>
-          <path class="stroke-ink" d="M 346 128 C 292 100, 226 118, 224 182 C 186 172, 164 214, 202 244 C 182 274, 226 310, 276 292 C 308 326, 364 314, 374 272 C 414 266, 428 220, 396 194 C 414 154, 382 122, 346 128 Z"/>
-          <path class="stroke-soft" d="M 290 124 q 16 -10 30 -2"/>
-          <path class="stroke-soft" d="M 258 160 q 10 -8 24 -3"/>
-          <path class="stroke-soft" d="M 344 168 q 14 -7 24 2"/>
-          <ellipse class="fill-soft" cx="262" cy="212" rx="4.5" ry="1.9" transform="rotate(18 262 212)"/>
-          <ellipse class="fill-soft" cx="312" cy="200" rx="4.5" ry="1.9" transform="rotate(-30 312 200)"/>
-          <ellipse class="fill-soft" cx="356" cy="236" rx="4.5" ry="1.9" transform="rotate(40 356 236)"/>
-          <ellipse class="fill-soft" cx="304" cy="254" rx="3.6" ry="1.6" transform="rotate(-8 304 254)"/>
+          <path class="fill-ink-wash" d="M 344 134 C 298 102, 236 112, 224 170 C 188 164, 168 202, 194 230 C 176 260, 208 294, 252 292 C 278 326, 338 324, 360 292 C 404 292, 434 260, 420 226 C 440 192, 418 152, 374 150 C 368 134, 358 126, 344 134 Z"/>
+          <path class="stroke-ink" d="M 344 134 C 298 102, 236 112, 224 170 C 188 164, 168 202, 194 230 C 176 260, 208 294, 252 292 C 278 326, 338 324, 360 292 C 404 292, 434 260, 420 226 C 440 192, 418 152, 374 150 C 368 134, 358 126, 344 134 Z"/>
+          <ellipse class="fill-soft" cx="262" cy="196" rx="5" ry="2" transform="rotate(20 262 196)"/>
+          <ellipse class="fill-soft" cx="306" cy="178" rx="5" ry="2" transform="rotate(-26 306 178)"/>
+          <ellipse class="fill-soft" cx="368" cy="210" rx="5" ry="2" transform="rotate(38 368 210)"/>
+          <ellipse class="fill-soft" cx="286" cy="244" rx="4" ry="1.8" transform="rotate(-8 286 244)"/>
+          <ellipse class="fill-soft" cx="334" cy="254" rx="4" ry="1.8" transform="rotate(24 334 254)"/>
         </g>
 
-        <!-- Tree trunk + hanging branch -->
-        <path class="stroke-ink" style="stroke-width:5.2" d="M 346 510 C 332 444, 348 366, 334 300 C 324 254, 334 198, 322 136"/>
-        <path class="stroke-soft" style="opacity:.45" d="M 338 486 C 332 430, 342 374, 336 318 C 332 276, 338 224, 328 164"/>
-        <path class="stroke-ink" style="stroke-width:3.1" d="M 336 246 Q 364 230, 388 246"/>
-        <path class="stroke-ink" style="stroke-width:2.8" d="M 330 290 Q 300 282, 274 298"/>
+        <!-- Tree trunk + branch -->
+        <path class="stroke-ink" style="stroke-width:5.4" d="M 332 510 C 322 446, 334 378, 324 316 C 314 250, 320 192, 314 146"/>
+        <path class="stroke-soft" style="opacity:.45" d="M 324 486 C 318 432, 326 376, 322 326 C 316 262, 320 210, 316 164"/>
+        <path class="stroke-ink" style="stroke-width:3.1" d="M 326 266 Q 356 248, 384 260"/>
 
-        <!-- Falling leaves -->
-        <ellipse class="leaf-fall fill-dim" cx="186" cy="332" rx="3.2" ry="1.5" transform="rotate(35 186 332)"/>
-        <ellipse class="leaf-fall l2 fill-dim" cx="420" cy="360" rx="3.2" ry="1.5" transform="rotate(-30 420 360)"/>
-        <ellipse class="leaf-fall l3 fill-dim" cx="164" cy="418" rx="3.2" ry="1.5" transform="rotate(62 164 418)"/>
+        <!-- Reader sitting at trunk -->
+        <path class="fill-paper stroke-ink" d="M 230 446 Q 246 406, 272 402 Q 298 398, 314 418 L 318 462 Q 306 480, 282 480 Q 238 480, 230 462 Z"/>
+        <path class="stroke-soft" d="M 258 412 Q 270 420, 282 412"/>
 
-        <!-- Reader silhouette -->
-        <path class="fill-paper stroke-ink" d="M 246 446 Q 258 402, 282 398 Q 304 394, 320 412 L 326 462 Q 316 478, 296 478 Q 256 478, 246 462 Z"/>
-        <path class="stroke-soft" d="M 272 410 Q 281 416, 290 410"/>
+        <circle class="fill-paper stroke-ink" cx="272" cy="390" r="18"/>
+        <path class="stroke-ink" style="fill:var(--ink);stroke:var(--ink)" d="M 254 382 Q 266 366, 282 372 Q 292 372, 292 384 L 286 376 Q 278 378, 270 380 Q 260 380, 256 388 Z"/>
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 266 392 q 2 1.5 4 0"/>
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 276 392 q 2 1.5 4 0"/>
 
-        <circle class="fill-paper stroke-ink" cx="284" cy="386" r="17"/>
-        <path class="stroke-ink" style="fill:var(--ink);stroke:var(--ink)" d="M 268 378 Q 278 364, 292 370 Q 302 369, 302 382 L 298 374 Q 290 376, 282 378 Q 274 379, 270 385 Z"/>
-        <path class="stroke-soft" style="stroke-width:1.2" d="M 278 389 q 2 1.4 4 0"/>
-        <path class="stroke-soft" style="stroke-width:1.2" d="M 288 389 q 2 1.4 4 0"/>
+        <!-- Legs + shoes -->
+        <path class="stroke-ink" style="stroke-width:9" d="M 242 480 Q 212 496, 174 492"/>
+        <path class="stroke-ink" style="stroke-width:9" d="M 264 480 Q 236 508, 188 508"/>
+        <path class="stroke-ink" style="stroke-width:3" d="M 172 492 q -10 0 -12 -4"/>
+        <path class="stroke-ink" style="stroke-width:3" d="M 186 510 q -10 0 -12 -4"/>
 
-        <path class="stroke-ink" style="stroke-width:9" d="M 256 478 Q 228 496, 190 494"/>
-        <path class="stroke-ink" style="stroke-width:9" d="M 276 478 Q 248 506, 202 506"/>
-        <path class="stroke-ink" style="stroke-width:3" d="M 186 494 q -10 0 -12 -4"/>
-        <path class="stroke-ink" style="stroke-width:3" d="M 200 508 q -10 0 -12 -4"/>
+        <!-- Hands + open book -->
+        <path class="stroke-ink" style="stroke-width:4.5" d="M 244 438 Q 234 452, 238 466"/>
+        <path class="stroke-ink" style="stroke-width:4.5" d="M 304 440 Q 314 452, 310 466"/>
+        <path class="fill-paper stroke-ink" d="M 226 468 L 226 446 L 270 442 L 270 468 Z"/>
+        <path class="fill-paper stroke-ink" d="M 270 442 L 316 446 L 316 468 L 270 468 Z"/>
+        <path class="stroke-ink" style="stroke-width:1.5" d="M 270 442 L 270 468"/>
+        <path class="stroke-dim" d="M 234 452 L 266 450 M 234 456 L 266 454 M 234 460 L 266 458"/>
+        <path class="stroke-dim" d="M 274 450 L 308 452 M 274 454 L 308 456 M 274 458 L 308 460"/>
 
-        <path class="stroke-ink" style="stroke-width:4.5" d="M 260 436 Q 250 448, 254 462"/>
-        <path class="stroke-ink" style="stroke-width:4.5" d="M 312 436 Q 320 448, 316 462"/>
+        <!-- Floating leaves -->
+        <ellipse class="leaf-fall fill-dim" cx="170" cy="334" rx="3.2" ry="1.5" transform="rotate(34 170 334)"/>
+        <ellipse class="leaf-fall l2 fill-dim" cx="420" cy="362" rx="3.2" ry="1.5" transform="rotate(-30 420 362)"/>
+        <ellipse class="leaf-fall l3 fill-dim" cx="154" cy="418" rx="3.2" ry="1.5" transform="rotate(62 154 418)"/>
 
-        <!-- Open book -->
-        <path class="fill-paper stroke-ink" d="M 244 466 L 244 446 L 284 442 L 284 466 Z"/>
-        <path class="fill-paper stroke-ink" d="M 284 442 L 326 446 L 326 466 L 284 466 Z"/>
-        <path class="stroke-ink" style="stroke-width:1.5" d="M 284 442 L 284 466"/>
-        <path class="stroke-dim" d="M 250 452 L 280 450 M 250 456 L 280 454 M 250 460 L 280 458"/>
-        <path class="stroke-dim" d="M 288 450 L 320 452 M 288 454 L 320 456 M 288 458 L 320 460"/>
+        <!-- Minimal bird-thought glyph -->
+        <path class="stroke-soft" style="stroke-width:1.3" d="M 214 338 q 6 -6 12 0 q 6 -6 12 0"/>
 
-        <!-- Constellation-like marks -->
-        <path class="stroke-soft" style="stroke-width:1.4" d="M 118 108 l 0 10 m -5 -5 l 10 0"/>
-        <path class="stroke-soft" style="stroke-width:1.1" d="M 430 90 l 0 7 m -3 -3.5 l 6 0"/>
-        <path class="stroke-soft" style="stroke-width:1.1" d="M 86 244 l 0 6 m -3 -3 l 6 0"/>
-
-        <!-- Sparrow-like thought glyph -->
-        <path class="stroke-soft" style="stroke-width:1.3" d="M 228 334 q 6 -6 12 0 q 6 -6 12 0"/>
+        <!-- Grass -->
+        <path class="stroke-dim" d="M 54 514 l -2 -9 M 60 514 l 0 -7 M 66 514 l 2 -9"/>
+        <path class="stroke-dim" d="M 430 514 l -2 -10 M 436 514 l 0 -8 M 442 514 l 2 -10"/>
       </svg>
       <p class="hero-caption">A reading instrument</p>
     </aside>
