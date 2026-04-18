@@ -117,7 +117,9 @@ impl App {
     fn state_path() -> Option<PathBuf> {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let home = std::env::var("HOME").ok().or_else(|| std::env::var("USERPROFILE").ok())?;
+            let home = std::env::var("HOME")
+                .ok()
+                .or_else(|| std::env::var("USERPROFILE").ok())?;
             Some(PathBuf::from(home).join(".speed-reader-state.json"))
         }
         #[cfg(target_arch = "wasm32")]
@@ -150,12 +152,13 @@ impl App {
     }
 
     fn record_current_location(&mut self) {
-        if let Some(path) = &self.file_path {
-            if let Ok(abs) = std::fs::canonicalize(path) {
-                if let Some(s) = abs.to_str() {
-                    self.state.locations.insert(s.to_string(), self.reader.index);
-                }
-            }
+        if let Some(path) = &self.file_path
+            && let Ok(abs) = std::fs::canonicalize(path)
+            && let Some(s) = abs.to_str()
+        {
+            self.state
+                .locations
+                .insert(s.to_string(), self.reader.index);
         }
     }
 
@@ -192,12 +195,11 @@ impl App {
         self.file_path = Some(path.to_path_buf());
 
         // Restore location
-        if let Ok(abs) = std::fs::canonicalize(path) {
-            if let Some(s) = abs.to_str() {
-                if let Some(&idx) = self.state.locations.get(s) {
-                    self.reader.index = idx.min(self.reader.chunks.len().saturating_sub(1));
-                }
-            }
+        if let Ok(abs) = std::fs::canonicalize(path)
+            && let Some(s) = abs.to_str()
+            && let Some(&idx) = self.state.locations.get(s)
+        {
+            self.reader.index = idx.min(self.reader.chunks.len().saturating_sub(1));
         }
 
         self.mode = Mode::Reading;
