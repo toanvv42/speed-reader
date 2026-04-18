@@ -2,7 +2,9 @@ use wasm_bindgen::prelude::*;
 
 use serde::Deserialize;
 
-use crate::doc::{Block, SectionStart, blocks_from_plain_text, parse_docx, parse_markdown, sections_from_blocks};
+use crate::doc::{
+    Block, SectionStart, blocks_from_plain_text, parse_docx, parse_markdown, sections_from_blocks,
+};
 use crate::reader::{ChapterTarget, ChunkKind, Reader, chapter_targets};
 
 #[wasm_bindgen]
@@ -51,7 +53,9 @@ impl WebReader {
                 block_index: section.block_index,
             })
             .collect();
-        Ok(Self::from_blocks_with_sections(blocks, sections, last_index))
+        Ok(Self::from_blocks_with_sections(
+            blocks, sections, last_index,
+        ))
     }
 
     /// Build a reader from the raw bytes of a .docx file.
