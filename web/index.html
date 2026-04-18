@@ -1091,85 +1091,75 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
     <!-- Hero illustration: a boy reading under a tree -->
     <aside class="hero-illustration" aria-hidden="true">
       <svg class="boy-tree" viewBox="0 0 500 640" xmlns="http://www.w3.org/2000/svg">
-        <!-- Ground -->
-        <path class="stroke-soft" d="M 20 510 C 140 503, 360 517, 480 508"/>
-        <!-- Grass tufts -->
-        <path class="stroke-dim" d="M 58 510 l -2 -9 M 64 510 l 0 -7 M 70 510 l 2 -9"/>
-        <path class="stroke-dim" d="M 440 510 l -2 -10 M 446 510 l 0 -8 M 452 510 l 2 -10"/>
-        <path class="stroke-dim" d="M 130 512 l -1 -6 M 134 513 l 1 -5"/>
+        <!-- Horizon -->
+        <path class="stroke-soft" d="M 26 514 C 142 504, 356 522, 474 510"/>
+        <path class="stroke-dim" style="opacity:.45" d="M 96 522 C 188 510, 308 532, 420 518"/>
 
-        <!-- Canopy wash -->
+        <!-- Quiet sky details -->
+        <circle class="fill-ink-wash" cx="108" cy="124" r="20"/>
+        <path class="stroke-dim" style="opacity:.55" d="M 64 176 q 20 -8 40 0"/>
+        <path class="stroke-dim" style="opacity:.4" d="M 54 196 q 28 -9 56 0"/>
+
+        <!-- Grass tufts -->
+        <path class="stroke-dim" d="M 70 512 l -2 -9 M 76 512 l 0 -7 M 82 512 l 2 -9"/>
+        <path class="stroke-dim" d="M 424 512 l -2 -10 M 430 512 l 0 -8 M 436 512 l 2 -10"/>
+        <path class="stroke-dim" d="M 154 514 l -1 -6 M 159 515 l 1 -5"/>
+
+        <!-- Canopy cluster -->
         <g class="breeze">
-          <path class="fill-ink-wash" d="M 360 155 C 298 124, 232 138, 230 200 C 192 188, 172 232, 214 262 C 194 296, 240 328, 294 306 C 328 336, 384 322, 394 280 C 436 272, 448 224, 412 200 C 434 158, 398 128, 360 155 Z"/>
-          <!-- Canopy outline (single continuous line) -->
-          <path class="stroke-ink" d="M 360 155 C 298 124, 232 138, 230 200 C 192 188, 172 232, 214 262 C 194 296, 240 328, 294 306 C 328 336, 384 322, 394 280 C 436 272, 448 224, 412 200 C 434 158, 398 128, 360 155 Z"/>
-          <!-- Small leaves inside canopy -->
-          <ellipse class="fill-soft" cx="268" cy="184" rx="4.5" ry="2" transform="rotate(30 268 184)"/>
-          <ellipse class="fill-soft" cx="312" cy="158" rx="4.5" ry="2" transform="rotate(-22 312 158)"/>
-          <ellipse class="fill-soft" cx="384" cy="202" rx="4.5" ry="2" transform="rotate(50 384 202)"/>
-          <ellipse class="fill-soft" cx="258" cy="246" rx="4.5" ry="2" transform="rotate(10 258 246)"/>
-          <ellipse class="fill-soft" cx="400" cy="248" rx="4.5" ry="2" transform="rotate(-40 400 248)"/>
-          <ellipse class="fill-soft" cx="344" cy="188" rx="3.5" ry="1.6" transform="rotate(25 344 188)"/>
-          <ellipse class="fill-soft" cx="300" cy="228" rx="3.5" ry="1.6" transform="rotate(-10 300 228)"/>
+          <path class="fill-ink-wash" d="M 346 128 C 292 100, 226 118, 224 182 C 186 172, 164 214, 202 244 C 182 274, 226 310, 276 292 C 308 326, 364 314, 374 272 C 414 266, 428 220, 396 194 C 414 154, 382 122, 346 128 Z"/>
+          <path class="stroke-ink" d="M 346 128 C 292 100, 226 118, 224 182 C 186 172, 164 214, 202 244 C 182 274, 226 310, 276 292 C 308 326, 364 314, 374 272 C 414 266, 428 220, 396 194 C 414 154, 382 122, 346 128 Z"/>
+          <path class="stroke-soft" d="M 290 124 q 16 -10 30 -2"/>
+          <path class="stroke-soft" d="M 258 160 q 10 -8 24 -3"/>
+          <path class="stroke-soft" d="M 344 168 q 14 -7 24 2"/>
+          <ellipse class="fill-soft" cx="262" cy="212" rx="4.5" ry="1.9" transform="rotate(18 262 212)"/>
+          <ellipse class="fill-soft" cx="312" cy="200" rx="4.5" ry="1.9" transform="rotate(-30 312 200)"/>
+          <ellipse class="fill-soft" cx="356" cy="236" rx="4.5" ry="1.9" transform="rotate(40 356 236)"/>
+          <ellipse class="fill-soft" cx="304" cy="254" rx="3.6" ry="1.6" transform="rotate(-8 304 254)"/>
         </g>
 
-        <!-- Tree trunk -->
-        <path class="stroke-ink" style="stroke-width:5" d="M 384 510 C 372 440, 390 360, 374 290 C 364 238, 378 190, 362 152"/>
-        <path class="stroke-soft" style="opacity:.5" d="M 376 480 C 370 420, 382 370, 374 310 C 370 260, 378 210, 366 172"/>
-        <!-- Branch stub -->
-        <path class="stroke-ink" style="stroke-width:3" d="M 372 282 Q 342 262, 314 274"/>
-        <path class="stroke-ink" style="stroke-width:3" d="M 378 212 Q 398 198, 418 210"/>
+        <!-- Tree trunk + hanging branch -->
+        <path class="stroke-ink" style="stroke-width:5.2" d="M 346 510 C 332 444, 348 366, 334 300 C 324 254, 334 198, 322 136"/>
+        <path class="stroke-soft" style="opacity:.45" d="M 338 486 C 332 430, 342 374, 336 318 C 332 276, 338 224, 328 164"/>
+        <path class="stroke-ink" style="stroke-width:3.1" d="M 336 246 Q 364 230, 388 246"/>
+        <path class="stroke-ink" style="stroke-width:2.8" d="M 330 290 Q 300 282, 274 298"/>
 
-        <!-- Falling leaves (animated) -->
-        <ellipse class="leaf-fall fill-dim" cx="198" cy="342" rx="3.2" ry="1.5" transform="rotate(45 198 342)"/>
-        <ellipse class="leaf-fall l2 fill-dim" cx="442" cy="372" rx="3.2" ry="1.5" transform="rotate(-25 442 372)"/>
-        <ellipse class="leaf-fall l3 fill-dim" cx="162" cy="418" rx="3.2" ry="1.5" transform="rotate(65 162 418)"/>
+        <!-- Falling leaves -->
+        <ellipse class="leaf-fall fill-dim" cx="186" cy="332" rx="3.2" ry="1.5" transform="rotate(35 186 332)"/>
+        <ellipse class="leaf-fall l2 fill-dim" cx="420" cy="360" rx="3.2" ry="1.5" transform="rotate(-30 420 360)"/>
+        <ellipse class="leaf-fall l3 fill-dim" cx="164" cy="418" rx="3.2" ry="1.5" transform="rotate(62 164 418)"/>
 
-        <!-- Boy: leaning against trunk -->
-        <!-- Body (torso in vest shape) -->
-        <path class="fill-paper stroke-ink" d="M 278 442 Q 290 398, 313 394 Q 336 390, 350 412 L 354 462 Q 344 478, 322 478 Q 288 478, 278 462 Z"/>
-        <!-- Collar detail -->
-        <path class="stroke-soft" d="M 304 404 Q 313 410, 322 404"/>
+        <!-- Reader silhouette -->
+        <path class="fill-paper stroke-ink" d="M 246 446 Q 258 402, 282 398 Q 304 394, 320 412 L 326 462 Q 316 478, 296 478 Q 256 478, 246 462 Z"/>
+        <path class="stroke-soft" d="M 272 410 Q 281 416, 290 410"/>
 
-        <!-- Head -->
-        <circle class="fill-paper stroke-ink" cx="315" cy="382" r="17"/>
-        <!-- Hair tuft -->
-        <path class="stroke-ink" style="fill:var(--ink);stroke:var(--ink)" d="M 299 372 Q 310 360, 323 366 Q 332 365, 333 378 L 329 370 Q 320 372, 314 374 Q 306 374, 302 380 Z"/>
-        <!-- Closed eye hint -->
-        <path class="stroke-soft" style="stroke-width:1.2" d="M 309 385 q 2 1.5 4 0"/>
-        <path class="stroke-soft" style="stroke-width:1.2" d="M 318 385 q 2 1.5 4 0"/>
+        <circle class="fill-paper stroke-ink" cx="284" cy="386" r="17"/>
+        <path class="stroke-ink" style="fill:var(--ink);stroke:var(--ink)" d="M 268 378 Q 278 364, 292 370 Q 302 369, 302 382 L 298 374 Q 290 376, 282 378 Q 274 379, 270 385 Z"/>
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 278 389 q 2 1.4 4 0"/>
+        <path class="stroke-soft" style="stroke-width:1.2" d="M 288 389 q 2 1.4 4 0"/>
 
-        <!-- Legs stretched out, crossed ankle -->
-        <path class="stroke-ink" style="stroke-width:9" d="M 288 478 Q 258 492, 220 490"/>
-        <path class="stroke-ink" style="stroke-width:9" d="M 306 478 Q 278 502, 234 502"/>
-        <!-- Shoes -->
-        <path class="stroke-ink" style="stroke-width:3" d="M 218 492 q -10 0 -12 -4"/>
-        <path class="stroke-ink" style="stroke-width:3" d="M 232 504 q -10 0 -12 -4"/>
+        <path class="stroke-ink" style="stroke-width:9" d="M 256 478 Q 228 496, 190 494"/>
+        <path class="stroke-ink" style="stroke-width:9" d="M 276 478 Q 248 506, 202 506"/>
+        <path class="stroke-ink" style="stroke-width:3" d="M 186 494 q -10 0 -12 -4"/>
+        <path class="stroke-ink" style="stroke-width:3" d="M 200 508 q -10 0 -12 -4"/>
 
-        <!-- Arms holding book -->
-        <path class="stroke-ink" style="stroke-width:4.5" d="M 293 434 Q 282 447, 286 462"/>
-        <path class="stroke-ink" style="stroke-width:4.5" d="M 343 434 Q 351 447, 346 462"/>
+        <path class="stroke-ink" style="stroke-width:4.5" d="M 260 436 Q 250 448, 254 462"/>
+        <path class="stroke-ink" style="stroke-width:4.5" d="M 312 436 Q 320 448, 316 462"/>
 
-        <!-- Open book on lap -->
-        <path class="fill-paper stroke-ink" d="M 276 465 L 276 446 L 316 443 L 316 465 Z"/>
-        <path class="fill-paper stroke-ink" d="M 316 443 L 356 446 L 356 465 L 316 465 Z"/>
-        <!-- Spine -->
-        <path class="stroke-ink" style="stroke-width:1.5" d="M 316 443 L 316 465"/>
-        <!-- Page lines -->
-        <path class="stroke-dim" d="M 283 451 L 312 449 M 283 455 L 312 453 M 283 459 L 312 457"/>
-        <path class="stroke-dim" d="M 320 449 L 350 451 M 320 453 L 350 455 M 320 457 L 350 459"/>
+        <!-- Open book -->
+        <path class="fill-paper stroke-ink" d="M 244 466 L 244 446 L 284 442 L 284 466 Z"/>
+        <path class="fill-paper stroke-ink" d="M 284 442 L 326 446 L 326 466 L 284 466 Z"/>
+        <path class="stroke-ink" style="stroke-width:1.5" d="M 284 442 L 284 466"/>
+        <path class="stroke-dim" d="M 250 452 L 280 450 M 250 456 L 280 454 M 250 460 L 280 458"/>
+        <path class="stroke-dim" d="M 288 450 L 320 452 M 288 454 L 320 456 M 288 458 L 320 460"/>
 
-        <!-- Tiny sparks / stars -->
-        <path class="stroke-soft" style="stroke-width:1.4" d="M 130 104 l 0 10 m -5 -5 l 10 0"/>
-        <path class="stroke-soft" style="stroke-width:1.2" d="M 450 78 l 0 7 m -3 -3.5 l 6 0"/>
-        <path class="stroke-soft" style="stroke-width:1.2" d="M 82 196 l 0 6 m -3 -3 l 6 0"/>
+        <!-- Constellation-like marks -->
+        <path class="stroke-soft" style="stroke-width:1.4" d="M 118 108 l 0 10 m -5 -5 l 10 0"/>
+        <path class="stroke-soft" style="stroke-width:1.1" d="M 430 90 l 0 7 m -3 -3.5 l 6 0"/>
+        <path class="stroke-soft" style="stroke-width:1.1" d="M 86 244 l 0 6 m -3 -3 l 6 0"/>
 
-        <!-- Soft wind lines (breath of thought) -->
-        <path class="stroke-dim" style="opacity:.5" d="M 60 276 Q 82 272, 104 278"/>
-        <path class="stroke-dim" style="opacity:.4" d="M 46 296 Q 72 292, 98 300"/>
-
-        <!-- Subtle "thought" hint above head: a tiny sparrow-esque mark -->
-        <path class="stroke-soft" style="stroke-width:1.3" d="M 260 330 q 6 -6 12 0 q 6 -6 12 0"/>
+        <!-- Sparrow-like thought glyph -->
+        <path class="stroke-soft" style="stroke-width:1.3" d="M 228 334 q 6 -6 12 0 q 6 -6 12 0"/>
       </svg>
       <p class="hero-caption">A reading instrument</p>
     </aside>
