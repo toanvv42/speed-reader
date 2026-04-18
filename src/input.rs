@@ -59,6 +59,7 @@ fn map_picker(k: KeyEvent) -> Option<Action> {
 
 fn map_chapter_picker(k: KeyEvent) -> Option<Action> {
     let ctrl = k.modifiers.contains(KeyModifiers::CONTROL);
+    let alt = k.modifiers.contains(KeyModifiers::ALT);
     match k.code {
         KeyCode::Esc => Some(Action::CloseChapterPicker),
         KeyCode::Up => Some(Action::ChapterUp),
@@ -66,7 +67,7 @@ fn map_chapter_picker(k: KeyEvent) -> Option<Action> {
         KeyCode::Enter => Some(Action::ChapterConfirm),
         KeyCode::Backspace => Some(Action::ChapterBackspace),
         KeyCode::Char('c') if ctrl => Some(Action::Quit),
-        KeyCode::Char(c) => Some(Action::ChapterInput(c)),
+        KeyCode::Char(c) if !ctrl && !alt => Some(Action::ChapterInput(c)),
         _ => None,
     }
 }
@@ -79,5 +80,17 @@ fn map_help(k: KeyEvent) -> Option<Action> {
             Some(Action::ToggleHelp)
         }
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+    #[test]
+    fn chapter_picker_ignores_alt_modified_chars() {
+        let key = KeyEvent::new(KeyCode::Char('f'), KeyModifiers::ALT);
+        assert!(map_chapter_picker(key).is_none());
     }
 }

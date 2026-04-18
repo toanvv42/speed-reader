@@ -1435,7 +1435,7 @@ async function extractPdfData(arrayBuffer) {
   }
   return {
     text: pages.join('\n\n'),
-    sections: await extractPdfSections(doc, pages),
+    sections: remapPdfSectionsToBlockIndices(await extractPdfSections(doc, pages), pages),
   };
 }
 
@@ -1455,7 +1455,7 @@ async function collectPdfOutlineSections(doc, items, level, sections) {
     const title = (item.title || '').replace(/\s+/g, ' ').trim();
     const pageIndex = await resolvePdfDestinationPage(doc, item.dest);
     if (title && Number.isInteger(pageIndex) && pageIndex >= 0) {
-      sections.push({ title, level, block_index: pageIndex });
+      sections.push({ title, level, page_index: pageIndex });
     }
     if (item.items?.length) {
       await collectPdfOutlineSections(doc, item.items, level + 1, sections);
@@ -1480,9 +1480,9 @@ async function resolvePdfDestinationPage(doc, dest) {
 function dedupePdfSections(sections, pageCount) {
   const seen = new Set();
   return sections.filter(section => {
-    if (!Number.isInteger(section.block_index)) return false;
-    if (section.block_index < 0 || section.block_index >= pageCount) return false;
-    const key = `${section.title}|${section.level}|${section.block_index}`;
+    if (!Number.isInteger(section.page_index)) return false;
+    if (section.page_index < 0 || section.page_index >= pageCount) return false;
+    const key = `${section.title}|${section.level}|${section.page_index}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -1492,7 +1492,7 @@ function dedupePdfSections(sections, pageCount) {
 function inferPdfSectionsFromPages(pages) {
   return pages.flatMap((pageText, index) => {
     const title = inferPdfSectionTitle(pageText);
-    return title ? [{ title, level: 1, block_index: index }] : [];
+    return title ? [{ title, level: 1, page_index: index }] : [];
   });
 }
 
@@ -1501,14 +1501,74 @@ function inferPdfSectionTitle(pageText) {
   if (!compact) return null;
   const sample = compact.slice(0, 140);
   for (const pattern of [
-    /^chapter\s+\d+\b[^.!?]{0,90}/i,
-    /^part\s+[ivxlcdm]+\b[^.!?]{0,90}/i,
-    /^\d+\.\s+[A-Z][^.!?]{0,90}/,
+    /\bchapter\s+\d+\b[^.!?]{0,90}/i,
+    /\bpart\s+[ivxlcdm]+\b[^.!?]{0,90}/i,
+    /\b\d+\.\s+[A-Z][^.!?]{0,90}/,
   ]) {
     const match = sample.match(pattern);
     if (match) return match[0].trim();
   }
   return null;
+}
+
+function sanitizePdfText(text) {
+  let out = '';
+  let prevSpace = false;
+  for (const ch of text) {
+    switch (ch) {
+      case '\u200B':
+      case '\u200C':
+      case '\u200D':
+      case '\uFEFF':
+      case '\u00AD':
+      case '\u2060':
+      case '\u180E':
+      case '\u034F':
+      case '\r':
+        break;
+      case '\n':
+        prevSpace = false;
+        out += '\n';
+        break;
+      case '\t':
+      case ' ':
+        if (!prevSpace) {
+          out += ' ';
+          prevSpace = true;
+        }
+        break;
+      default:
+        if (/[\u0000-\u001F\u007F-\u009F]/.test(ch)) break;
+        prevSpace = false;
+        out += ch;
+        break;
+    }
+  }
+  return out;
+}
+
+function countBlocksFromPlainText(text) {
+  const cleaned = sanitizePdfText(text);
+  let count = 0;
+  for (const para of cleaned.split('\n\n')) {
+    const flat = para.replace(/\n/g, ' ');
+    if (flat.trim()) count += 1;
+  }
+  return count;
+}
+
+function remapPdfSectionsToBlockIndices(sections, pages) {
+  let blocksBeforePage = 0;
+  const pageBlockStarts = pages.map(pageText => {
+    const start = blocksBeforePage;
+    blocksBeforePage += countBlocksFromPlainText(pageText);
+    return start;
+  });
+  return sections.map(section => ({
+    title: section.title,
+    level: section.level,
+    block_index: pageBlockStarts[section.page_index] ?? blocksBeforePage,
+  }));
 }
 
 let reader = null;
@@ -2075,7 +2135,6 @@ document.addEventListener('drop', async e => {
 // --- Keyboard shortcuts ---
 document.addEventListener('keydown', e => {
   if ($chapterDialog.open) {
-    const filtered = renderChapterList();
     if (e.key === 'Escape') {
       e.preventDefault();
       closeChapterDialog();
@@ -2083,6 +2142,7 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
+      const filtered = filteredChapters();
       if (filtered.length) {
         chapterSelection = Math.min(chapterSelection + 1, filtered.length - 1);
         renderChapterList();
@@ -2091,6 +2151,7 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
+      const filtered = filteredChapters();
       if (filtered.length) {
         chapterSelection = Math.max(chapterSelection - 1, 0);
         renderChapterList();
@@ -2099,6 +2160,7 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'Enter') {
       e.preventDefault();
+      const filtered = filteredChapters();
       if (filtered.length) jumpToFilteredChapter(chapterSelection);
       return;
     }
