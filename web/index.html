@@ -1352,6 +1352,13 @@ function saveLocation() {
   }
 }
 
+function formatRemaining(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
 function render() {
   if (!reader || reader.total() === 0) {
     $word.textContent = '';
@@ -1403,7 +1410,8 @@ function render() {
 
   const i = reader.index();
   const total = reader.total();
-  $progress.innerHTML = `${i + 1}<em>/</em>${total}`;
+  const remaining = formatRemaining(reader.remainingDurationMs(wpm, imagePauseMs));
+  $progress.innerHTML = `${i + 1}<em>/</em>${total} · <em>${remaining}</em>`;
   $progressBar.style.width = total > 1 ? `${((i) / (total - 1)) * 100}%` : '0%';
   $play.classList.toggle('playing', reader.isPlaying());
   $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;

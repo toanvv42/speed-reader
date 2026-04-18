@@ -105,6 +105,14 @@ impl WebReader {
         self.inner.chunk_duration(wpm, pause).as_millis() as u32
     }
 
+    #[wasm_bindgen(js_name = remainingDurationMs)]
+    pub fn remaining_duration_ms(&self, wpm: u32, image_pause_ms: u32) -> u32 {
+        let pause = std::time::Duration::from_millis(image_pause_ms as u64);
+        self.inner
+            .remaining_duration_from(self.inner.index, wpm, pause)
+            .as_millis() as u32
+    }
+
     #[wasm_bindgen(js_name = isPlaying)]
     pub fn is_playing(&self) -> bool {
         self.inner.playing
