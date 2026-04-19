@@ -320,17 +320,24 @@ fn pdf_outline_sections(
     };
 
     let mut sections = Vec::new();
-    collect_outline_sections(
-        &doc,
-        first_id,
-        1,
-        &page_numbers,
+    let mut context = OutlineSectionsContext {
+        page_numbers: &page_numbers,
         page_block_starts,
         total_blocks,
-        &mut sections,
-        &mut HashSet::new(),
-    )?;
+        sections: &mut sections,
+        visited: HashSet::new(),
+    };
+    collect_outline_sections(&doc, first_id, 1, &mut context)?;
     Ok(sections)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct OutlineSectionsContext<'a> {
+    page_numbers: &'a HashMap<pdf_extract::ObjectId, u32>,
+    page_block_starts: &'a [usize],
+    total_blocks: usize,
+    sections: &'a mut Vec<SectionStart>,
+    visited: HashSet<pdf_extract::ObjectId>,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -338,25 +345,25 @@ fn collect_outline_sections(
     doc: &pdf_extract::Document,
     first_id: pdf_extract::ObjectId,
     level: u8,
-    page_numbers: &HashMap<pdf_extract::ObjectId, u32>,
-    page_block_starts: &[usize],
-    total_blocks: usize,
-    sections: &mut Vec<SectionStart>,
-    visited: &mut HashSet<pdf_extract::ObjectId>,
+    context: &mut OutlineSectionsContext<'_>,
 ) -> Result<()> {
     let mut current = Some(first_id);
     while let Some(item_id) = current {
-        if !visited.insert(item_id) {
+        if !context.visited.insert(item_id) {
             break;
         }
         let item = doc.get_dictionary(item_id)?;
         if let Some(title) = outline_title(item)
-            && let Some(page_number) = outline_page_number(doc, item, page_numbers)
+            && let Some(page_number) = outline_page_number(doc, item, context.page_numbers)
         {
-            sections.push(SectionStart {
+            context.sections.push(SectionStart {
                 title,
                 level,
-                block_index: page_to_block_index(page_number, page_block_starts, total_blocks),
+                block_index: page_to_block_index(
+                    page_number,
+                    context.page_block_starts,
+                    context.total_blocks,
+                ),
             });
         }
 
@@ -364,16 +371,7 @@ fn collect_outline_sections(
             .get(b"First")
             .and_then(pdf_extract::Object::as_reference)
         {
-            collect_outline_sections(
-                doc,
-                child_id,
-                level.saturating_add(1),
-                page_numbers,
-                page_block_starts,
-                total_blocks,
-                sections,
-                visited,
-            )?;
+            collect_outline_sections(doc, child_id, level.saturating_add(1), context)?;
         }
 
         current = item
@@ -453,7 +451,8 @@ fn decode_pdf_string(bytes: &[u8]) -> String {
     if bytes.len() >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF {
         return decode_utf16_be(&bytes[2..]);
     }
-    if bytes.len() >= 2 && bytes.len() % 2 == 0 && bytes.iter().step_by(2).all(|b| *b == 0) {
+    if bytes.len() >= 2 && bytes.len().is_multiple_of(2) && bytes.iter().step_by(2).all(|b| *b == 0)
+    {
         return decode_utf16_be(bytes);
     }
     String::from_utf8_lossy(bytes)
