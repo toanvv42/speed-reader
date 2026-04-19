@@ -34,26 +34,11 @@ awk -v b64file="$WASM_B64_FILE" '
   echo '<!DOCTYPE html>'
   echo '<html lang="en">'
   echo '<head>'
-  echo '<meta charset="utf-8">'
-  echo '<meta name="viewport" content="width=device-width, initial-scale=1">'
-  echo '<title>speed-reader — a quiet reading instrument</title>'
-  echo '<meta name="description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">'
-  echo ''
-  echo '<!-- Open Graph / Facebook -->'
-  echo '<meta property="og:type" content="website">'
-  echo '<meta property="og:url" content="https://tinywins.us/">'
-  echo '<meta property="og:title" content="speed-reader — a quiet reading instrument">'
-  echo '<meta property="og:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">'
-  echo '<meta property="og:image" content="https://tinywins.us/og.svg">'
-  echo ''
-  echo '<!-- Twitter -->'
-  echo '<meta name="twitter:card" content="summary_large_image">'
-  echo '<meta name="twitter:url" content="https://tinywins.us/">'
-  echo '<meta name="twitter:title" content="speed-reader — a quiet reading instrument">'
-  echo '<meta name="twitter:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">'
-  echo '<meta name="twitter:image" content="https://tinywins.us/og.svg">'
-  echo ''
-  sed -n '/<style>/,/<\/style>/p' "$ROOT/web/index.html"
+  awk '
+    /<head>/ { in_head = 1; next }
+    /<\/head>/ { in_head = 0 }
+    in_head { print }
+  ' "$ROOT/web/index.html"
   echo '</head>'
 
   # Body (everything between <body> and the first <script)
@@ -82,6 +67,7 @@ rm -f "$WASM_B64_FILE" "$PATCHED_JS_FILE"
 
 # Copy social sharing assets
 cp "$ROOT/web/og.svg" "$DIST/og.svg"
+cp "$ROOT/web/favicon.svg" "$DIST/favicon.svg"
 
 # GitHub Pages custom domain. Without this file in the uploaded
 # artifact, each Pages deploy would clear the custom domain.
