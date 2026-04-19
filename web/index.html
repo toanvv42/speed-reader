@@ -1168,47 +1168,70 @@ dialog#chapter-dialog .dialog-sub {
 
   /* Status bar: two-row layout on mobile for bigger touch targets */
   #status {
-    padding: 0.6rem 0.5rem;
-    padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
-    gap: 0.3rem;
+    padding: 0.55rem 0.55rem;
+    padding-bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.35rem;
     font-size: 0.72rem;
     display: grid;
-    grid-template-columns: auto auto 1fr auto auto auto auto;
-    grid-template-rows: auto auto;
-    justify-items: center;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-areas:
+      "prev slower play faster next"
+      "open wpm progress chapters help"
+      "font font weather theme theme";
+    justify-items: stretch;
     align-items: center;
+    border-top-color: var(--rule-strong);
+    background: color-mix(in srgb, var(--paper) 88%, var(--paper-deep) 12%);
+    backdrop-filter: blur(3px);
   }
   #status .divider { display: none; }
   #status button {
-    min-width: 2.8rem;
-    height: 2.8rem;
-    padding: 0.5rem;
+    min-width: 100%;
+    width: 100%;
+    height: 2.55rem;
+    padding: 0.45rem;
     border-radius: 8px;
   }
   #status button svg { width: 18px; height: 18px; }
   #btn-play {
-    min-width: 3.2rem;
-    height: 3.2rem;
-    border-radius: 50%;
+    height: 3rem;
+    border-radius: 10px;
   }
-  #wpm-display, #progress { font-size: 0.78rem; padding: 0 0.2rem; }
+  #wpm-display, #progress {
+    font-size: 0.76rem;
+    padding: 0.45rem 0.5rem;
+    min-width: 0;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--paper-raised) 75%, var(--paper-deep) 25%);
+    border: 1px solid var(--rule);
+  }
 
-  /* Row 1: prev | wpm-down | play | wpm-up | next */
-  #btn-prev     { grid-column: 1; grid-row: 1; }
-  #btn-wpm-down { grid-column: 2; grid-row: 1; }
-  #btn-play     { grid-column: 3; grid-row: 1; }
-  #btn-wpm-up   { grid-column: 4; grid-row: 1; }
-  #btn-next     { grid-column: 5; grid-row: 1; }
+  /* Row 1: transport + speed nudges */
+  #btn-prev     { grid-area: prev; }
+  #btn-wpm-down { grid-area: slower; }
+  #btn-play     { grid-area: play; }
+  #btn-wpm-up   { grid-area: faster; }
+  #btn-next     { grid-area: next; }
 
-  /* Row 2: open | wpm | progress | chapters | font | weather | theme */
-  #btn-open     { grid-column: 1; grid-row: 2; }
-  #wpm-display  { grid-column: 2; grid-row: 2; }
-  #progress     { grid-column: 3; grid-row: 2; }
-  #btn-chapters { grid-column: 4; grid-row: 2; }
-  .font-picker  { grid-column: 5; grid-row: 2; }
-  .weather-picker { grid-column: 6; grid-row: 2; }
-  #btn-theme    { grid-column: 7; grid-row: 2; }
-  #btn-help     { display: none; }
+  /* Row 2: file + readout + chapters/help */
+  #btn-open     { grid-area: open; }
+  #wpm-display  { grid-area: wpm; }
+  #progress     { grid-area: progress; }
+  #btn-chapters { grid-area: chapters; }
+  #btn-help     { grid-area: help; }
+
+  /* Row 3: visual controls */
+  .font-picker    { grid-area: font; width: 100%; }
+  .weather-picker { grid-area: weather; width: 100%; }
+  #btn-theme      { grid-area: theme; }
+  #btn-font,
+  #btn-weather,
+  #btn-theme {
+    height: 2.65rem;
+    border-color: var(--rule);
+    background: color-mix(in srgb, var(--paper-raised) 80%, var(--paper-deep) 20%);
+  }
+  #btn-font { font-size: 1rem; }
 
   /* Font menu: full-width bottom sheet on mobile */
   #font-menu {
