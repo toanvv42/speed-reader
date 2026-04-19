@@ -66,8 +66,12 @@ impl Reader {
     }
 
     pub fn chunk_duration(&self, wpm: u32, image_pause: Duration) -> Duration {
-        if self.current().map(|c| c.kind) == Some(ChunkKind::Image) {
-            return image_pause;
+        if let Some(chunk) = self.current() {
+            match chunk.kind {
+                ChunkKind::Image => return image_pause,
+                ChunkKind::Code => return code_pause_duration(chunk, image_pause),
+                _ => {}
+            }
         }
         let base_ms = 60_000.0 / (wpm.max(1) as f32);
         let m = self.current().map(|c| c.multiplier).unwrap_or(1.0);
@@ -86,10 +90,10 @@ impl Reader {
 
         self.chunks[start..]
             .iter()
-            .map(|chunk| {
-                if chunk.kind == ChunkKind::Image {
-                    image_pause
-                } else {
+            .map(|chunk| match chunk.kind {
+                ChunkKind::Image => image_pause,
+                ChunkKind::Code => code_pause_duration(chunk, image_pause),
+                _ => {
                     let base_ms = 60_000.0 / (wpm.max(1) as f32);
                     Duration::from_millis((base_ms * chunk.multiplier).max(20.0) as u64)
                 }
@@ -113,7 +117,13 @@ fn tokenize(blocks: &[Block]) -> Vec<Chunk> {
         match block {
             Block::Text(s) => tokenize_text(&mut out, s, ChunkKind::Word, 1.0),
             Block::Heading(_, s) => tokenize_text(&mut out, s, ChunkKind::Heading, 1.3),
-            Block::Code(s) => tokenize_text(&mut out, s, ChunkKind::Code, 1.2),
+            Block::Code(s) => out.push(Chunk {
+                text: s.clone(),
+                kind: ChunkKind::Code,
+                multiplier: 1.0,
+                orp: 0,
+                image_url: None,
+            }),
             Block::Image(url) => out.push(Chunk {
                 text: truncate_end(url, 60),
                 kind: ChunkKind::Image,
@@ -151,6 +161,19 @@ fn punctuation_multiplier(word: &str) -> f32 {
         Some(',') | Some(';') | Some(':') => 1.5,
         _ => 1.0,
     }
+}
+
+fn code_pause_duration(chunk: &Chunk, image_pause: Duration) -> Duration {
+    let lines = chunk.text.lines().count().max(1) as f32;
+    let width = chunk
+        .text
+        .lines()
+        .map(|line| line.chars().count())
+        .max()
+        .unwrap_or(0) as f32;
+    let baseline = image_pause.as_secs_f32().max(3.0);
+    let seconds = (baseline + (lines * 0.6) + (width / 48.0)).clamp(baseline, 12.0);
+    Duration::from_secs_f32(seconds)
 }
 
 pub fn orp_index(word: &str) -> usize {
@@ -229,6 +252,16 @@ mod tests {
         assert!(r.at_end());
         r.retreat(100);
         assert_eq!(r.index, 0);
+    }
+
+    #[test]
+    fn code_blocks_are_single_chunks() {
+        let r = Reader::from_blocks(vec![Block::Code(
+            "fn main() {\n    println!(\"hi\");\n}".into(),
+        )]);
+        assert_eq!(r.chunks.len(), 1);
+        assert_eq!(r.chunks[0].kind, ChunkKind::Code);
+        assert_eq!(r.chunks[0].text, "fn main() {\n    println!(\"hi\");\n}");
     }
 
     #[test]

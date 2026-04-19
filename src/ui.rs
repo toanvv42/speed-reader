@@ -52,6 +52,11 @@ fn draw_reader(f: &mut Frame, app: &mut App, area: Rect, p: &Palette) {
 }
 
 fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
+    if matches!(app.reader.current().map(|c| c.kind), Some(ChunkKind::Code)) {
+        draw_code_body(f, app, body, p);
+        return;
+    }
+
     let inner = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -75,6 +80,41 @@ fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
             f.render_widget(hint_para, inner[2]);
         }
     }
+}
+
+fn draw_code_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
+    let Some(chunk) = app.reader.current() else {
+        return;
+    };
+
+    let outer = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(10),
+            Constraint::Min(3),
+            Constraint::Length(2),
+            Constraint::Percentage(10),
+        ])
+        .split(body);
+
+    let code_rect = centered_rect(90, 80, outer[1]);
+    let code = Paragraph::new(chunk.text.clone())
+        .block(
+            Block::default()
+                .title(" code ")
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(p.accent))
+                .style(Style::default().bg(p.modal_bg).fg(p.fg)),
+        )
+        .wrap(Wrap { trim: false });
+    f.render_widget(code, code_rect);
+
+    let hint = Paragraph::new(Line::from(Span::styled(
+        "full code block · Space pause · ← → to step",
+        Style::default().fg(p.dim),
+    )))
+    .alignment(Alignment::Center);
+    f.render_widget(hint, outer[2]);
 }
 
 fn draw_empty_body(f: &mut Frame, body: Rect, p: &Palette) {
@@ -180,9 +220,30 @@ fn render_chunk(c: &Chunk, p: &Palette) -> Line<'static> {
 fn kind_hint(k: ChunkKind) -> &'static str {
     match k {
         ChunkKind::Heading => "— heading —",
-        ChunkKind::Code => "— code —",
         _ => "",
     }
+}
+
+fn centered_rect(width_pct: u16, height_pct: u16, area: Rect) -> Rect {
+    let vertical = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - height_pct) / 2),
+            Constraint::Percentage(height_pct),
+            Constraint::Percentage((100 - height_pct) / 2),
+        ])
+        .split(area);
+
+    let horizontal = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - width_pct) / 2),
+            Constraint::Percentage(width_pct),
+            Constraint::Percentage((100 - width_pct) / 2),
+        ])
+        .split(vertical[1]);
+
+    horizontal[1]
 }
 
 fn render_status(app: &App, p: &Palette) -> Paragraph<'static> {

@@ -197,6 +197,35 @@ body.rsvp .rail { opacity: 0.55; }
   text-align: center;
 }
 
+#code-display {
+  display: none;
+  width: min(1120px, 92vw);
+  max-height: min(68vh, 900px);
+  overflow: auto;
+  padding: 1.2rem 1.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper-raised) 92%, var(--paper-deep));
+  box-shadow: var(--shadow-md);
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.8rem, 1vw + 0.35rem, 1.1rem);
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+body.rsvp.code-mode #word {
+  display: none;
+}
+
+body.rsvp.code-mode .rail {
+  opacity: 0;
+}
+
 /* ─────────── Cinematic transitions ─────────── */
 /* In RSVP mode: word floats up from nothing. Landing mode: word hidden. */
 body:not(.rsvp) #reader { opacity: 0; }
@@ -923,6 +952,13 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
   /* RSVP mode */
   #reader { padding: 1rem 0.5rem; }
   #word { font-size: clamp(2rem, 11vw, 4rem); }
+  #code-display {
+    width: min(96vw, 1120px);
+    max-height: 64vh;
+    padding: 0.95rem 1rem;
+    font-size: clamp(0.72rem, 1.8vw + 0.35rem, 0.95rem);
+    line-height: 1.45;
+  }
   .rail { width: min(560px, 90vw); }
   .rail.top    { top: calc(50% - 5.5rem); }
   .rail.bottom { top: calc(50% + 5.5rem); }
@@ -1048,6 +1084,7 @@ dialog#help-dialog button.close:hover { background: var(--ink-soft); border-colo
 <!-- Reader (RSVP) view -->
 <main id="reader">
   <div id="word"></div>
+  <pre id="code-display"></pre>
   <div id="kind-hint"></div>
   <img id="image-display" alt="">
   <div id="image-caption"></div>
@@ -1316,6 +1353,7 @@ const FONTS = [
 const DEFAULT_FONT_KEY = 'sfpro';
 
 const $word = document.getElementById('word');
+const $code = document.getElementById('code-display');
 const $hint = document.getElementById('kind-hint');
 const $img = document.getElementById('image-display');
 const $imgCaption = document.getElementById('image-caption');
@@ -1362,9 +1400,12 @@ function formatRemaining(ms) {
 function render() {
   if (!reader || reader.total() === 0) {
     $word.textContent = '';
+    $code.textContent = '';
+    $code.style.display = 'none';
     $hint.textContent = '';
     $img.style.display = 'none';
     $imgCaption.style.display = 'none';
+    document.body.classList.remove('code-mode');
     $progress.innerHTML = '0<em>/</em>0';
     $progressBar.style.width = '0%';
     return;
@@ -1379,7 +1420,10 @@ function render() {
 
   if (kind === 'image' && url) {
     $word.textContent = '';
+    $code.textContent = '';
+    $code.style.display = 'none';
     $hint.textContent = '';
+    document.body.classList.remove('code-mode');
     const filename = url.split('/').pop();
     const resolved = url.startsWith('http') ? url : (blobMap[url] || blobMap[filename] || url);
     $img.src = resolved;
@@ -1390,10 +1434,22 @@ function render() {
     $img.style.display = 'none';
     $imgCaption.style.display = 'none';
 
-    if (kind === 'paragraph') {
+    if (kind === 'code') {
+      document.body.classList.add('code-mode');
+      $word.textContent = '';
+      $code.textContent = text;
+      $code.style.display = 'block';
+      $hint.textContent = 'code block';
+    } else if (kind === 'paragraph') {
+      document.body.classList.remove('code-mode');
+      $code.textContent = '';
+      $code.style.display = 'none';
       $word.innerHTML = '<span class="pilcrow">¶</span>';
       $hint.textContent = '';
     } else {
+      document.body.classList.remove('code-mode');
+      $code.textContent = '';
+      $code.style.display = 'none';
       const chars = [...text];
       const spans = chars.map((c, i) =>
         i === orp
