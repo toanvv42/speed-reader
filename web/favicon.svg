@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background: Subtle a bit of the "paper" feel if needed, but usually icons are transparent -->
+  
+  <!-- Open Book Silhouette -->
+  <path d="M16 24c-1 0-2-1-2-2V10c0-1 1-2 2-2s2 1 2 2v12c0 1-1 2-2 2z" fill="#e4dfd3" />
+  <path d="M14 24c-4 0-8-2-8-6v-6c0-2 2-4 4-4h4v12z" fill="#fbfaf8" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round" />
+  <path d="M18 24c4 0 8-2 8-6v-6c0-2-2-4-4-4h-4v12z" fill="#fbfaf8" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round" />
+  
+  <!-- The "Focus Point" (ORP) - The heart of the app -->
+  <rect x="20" y="12" width="4" height="2" rx="0.5" fill="#b8451e" />
+</svg>
