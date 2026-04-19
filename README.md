@@ -103,6 +103,44 @@ make dist            # builds all four targets and tarballs into dist/
 
 `make help` prints the full list.
 
+## Web app configuration (Google Analytics + API keys)
+
+The browser build lives in `web/index.html`.
+
+### Enable Google Analytics (GA4)
+
+1. Create a GA4 web data stream in Google Analytics and copy its **Measurement ID** (looks like `G-XXXXXXXXXX`).
+2. Open `web/index.html`.
+3. Set the `google-analytics-measurement-id` meta tag:
+
+   ```html
+   <meta name="google-analytics-measurement-id" content="G-XXXXXXXXXX">
+   ```
+
+4. Deploy as usual. If the tag is empty, analytics stays disabled.
+
+The app records lightweight events such as:
+- `reader_loaded`
+- `document_loaded` (`markdown`, `plain_text`, `docx`, `pdf`)
+- `reader_play` / `reader_pause`
+- `wpm_changed`
+- `theme_changed`
+
+### Adding Google API keys safely
+
+If you add features that call Google APIs (Drive, Gemini, etc.), use this rule:
+
+- **Never put secret server keys in browser JavaScript.** Anything in `web/index.html` is public.
+- For browser-only APIs, use a restricted browser key (HTTP referrer restrictions in Google Cloud Console).
+- For sensitive APIs, route requests through your backend and keep secrets in server environment variables.
+
+Recommended setup:
+
+1. Store secrets on the server (`GOOGLE_API_KEY`, service account credentials, etc.).
+2. Expose only a minimal endpoint from your backend to the web app.
+3. In the frontend, call your own endpoint (not Google directly) for privileged operations.
+4. Add rate limits and auth checks on that backend endpoint.
+
 ## Project layout
 
 ```
