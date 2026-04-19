@@ -11,19 +11,30 @@
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tinywins.us/">
-<meta property="og:title" content="speed-reader — a quiet reading instrument">
+<meta property="og:title" content="Speed reader — Accelerate to 3x speed">
 <meta property="og:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
 <meta property="og:image" content="https://tinywins.us/og.svg">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:url" content="https://tinywins.us/">
-<meta name="twitter:title" content="speed-reader — a quiet reading instrument">
+<meta name="twitter:title" content="Speed reader — Accelerate to 3x speed">
 <meta name="twitter:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
 <meta name="twitter:image" content="https://tinywins.us/og.svg">
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Noto+Serif:ital,wght@0,400;0,500;1,400&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+
+#weather-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+body.weather-active #weather-canvas { opacity: 0.4; }
 
 /* ─────────── Tokens ─────────── */
 :root {
@@ -83,6 +94,26 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -6px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.35), 0 24px 60px -12px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="sepia"] {
+  --paper: #ebdcbe; --paper-raised: #f5ead6; --paper-deep: #e2d4b3;
+  --ink: #463c34; --ink-soft: #5c524a; --ink-dim: #8a7d72;
+  --rule: #d1c4a8; --rule-strong: #c1b398;
+  --accent: #a04020; --accent-soft: #c06040;
+  --shadow-sm: 0 1px 2px rgba(70, 60, 50, 0.1);
+  --shadow-md: 0 1px 2px rgba(70, 60, 50, 0.1), 0 8px 24px -6px rgba(70, 60, 50, 0.15);
+  --shadow-lg: 0 1px 2px rgba(70, 60, 50, 0.1), 0 20px 50px -12px rgba(70, 60, 50, 0.2);
+}
+
+[data-theme="dynamic"] {
+  --paper: #141414; --paper-raised: #1c1c1c; --paper-deep: #0f0f0f;
+  --ink: #ececec; --ink-soft: #b0b0b0; --ink-dim: #606060;
+  --rule: #2a2a2a; --rule-strong: #3a3a3a;
+  --accent: #ff5050; --accent-soft: #ff8080;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -6px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 60px -12px rgba(0, 0, 0, 0.7);
 }
 
 /* ─────────── Reset ─────────── */
@@ -325,6 +356,10 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   position: relative;
   display: inline-block;
 }
+.weather-picker {
+  position: relative;
+  display: inline-block;
+}
 #btn-font {
   min-width: 2.1rem;
   padding: 0.45rem 0.6rem !important;
@@ -334,6 +369,16 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   letter-spacing: -0.01em;
 }
 #btn-font.open {
+  background: var(--paper-deep);
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+#btn-weather.active {
+  background: var(--paper-deep);
+  border-color: var(--rule);
+  color: var(--accent);
+}
+#btn-weather.open {
   background: var(--paper-deep);
   border-color: var(--rule-strong);
   color: var(--ink);
@@ -360,6 +405,30 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   overflow-y: auto;
 }
 #font-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+#weather-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  min-width: 220px;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 6px var(--paper-deep),
+    var(--shadow-lg);
+  padding: 0.45rem;
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transform-origin: bottom right;
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+#weather-menu.open {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
@@ -423,6 +492,51 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   font-size: 0.82rem;
   color: var(--ink-soft);
   margin-top: 0.1rem;
+  text-align: left;
+}
+.weather-option {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch !important;
+  justify-content: center !important;
+  gap: 0.12rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem !important;
+  min-width: 0;
+  height: auto !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink);
+  transition: background-color 140ms ease;
+  position: relative;
+}
+.weather-option:hover { background: var(--paper-deep); }
+.weather-option.active { background: rgba(184, 69, 30, 0.05); }
+.weather-option.active::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.weather-option .wo-name {
+  font-size: 0.92rem;
+  line-height: 1.15;
+  color: var(--ink);
+  text-align: left;
+}
+.weather-option .wo-meta {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.02em;
   text-align: left;
 }
 .font-menu-footer {
@@ -1038,6 +1152,7 @@ dialog#chapter-dialog .dialog-sub {
   #drop-hint { display: none; }
   .privacy-note { font-size: 0.7rem; }
   .meta { display: none; }
+  body.weather-active #weather-canvas { opacity: 0.28; }
 
   /* RSVP mode */
   #reader { padding: 1rem 0.5rem; }
@@ -1058,7 +1173,7 @@ dialog#chapter-dialog .dialog-sub {
     gap: 0.3rem;
     font-size: 0.72rem;
     display: grid;
-    grid-template-columns: auto auto 1fr auto auto auto;
+    grid-template-columns: auto auto 1fr auto auto auto auto;
     grid-template-rows: auto auto;
     justify-items: center;
     align-items: center;
@@ -1085,13 +1200,14 @@ dialog#chapter-dialog .dialog-sub {
   #btn-wpm-up   { grid-column: 4; grid-row: 1; }
   #btn-next     { grid-column: 5; grid-row: 1; }
 
-  /* Row 2: open | wpm | progress | chapters | font | theme */
+  /* Row 2: open | wpm | progress | chapters | font | weather | theme */
   #btn-open     { grid-column: 1; grid-row: 2; }
   #wpm-display  { grid-column: 2; grid-row: 2; }
   #progress     { grid-column: 3; grid-row: 2; }
   #btn-chapters { grid-column: 4; grid-row: 2; }
   .font-picker  { grid-column: 5; grid-row: 2; }
-  #btn-theme    { grid-column: 6; grid-row: 2; }
+  .weather-picker { grid-column: 6; grid-row: 2; }
+  #btn-theme    { grid-column: 7; grid-row: 2; }
   #btn-help     { display: none; }
 
   /* Font menu: full-width bottom sheet on mobile */
@@ -1105,6 +1221,18 @@ dialog#chapter-dialog .dialog-sub {
     width: 100%;
     border-radius: 14px 14px 0 0;
     max-height: 70vh;
+    transform-origin: bottom center;
+  }
+  #weather-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    min-width: 0;
+    width: 100%;
+    border-radius: 14px 14px 0 0;
+    max-height: 55vh;
     transform-origin: bottom center;
   }
 
@@ -1162,9 +1290,10 @@ dialog#chapter-dialog .dialog-sub {
 </style>
 </head>
 <body>
+  <canvas id="weather-canvas"></canvas>
+  <!-- Hairline progress bar (RSVP) -->
+  <div id="progress-bar"></div>
 
-<!-- Hairline progress bar (RSVP) -->
-<div id="progress-bar"></div>
 
 <!-- Reading rails (RSVP) -->
 <div class="rail top"></div>
@@ -1225,6 +1354,15 @@ dialog#chapter-dialog .dialog-sub {
   <span class="font-picker">
     <button id="btn-font" title="Choose reading font (f)" aria-label="Choose reading font" aria-haspopup="true" aria-expanded="false">Aa</button>
     <div id="font-menu" role="menu" aria-label="Reading fonts"></div>
+  </span>
+  <span class="weather-picker">
+    <button id="btn-weather" title="Choose weather ambience (w)" aria-label="Choose weather ambience" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 18h9a4 4 0 0 0 .2-8 5 5 0 0 0-9.7 1.5A3.5 3.5 0 0 0 7 18z"/>
+        <path d="M9 20l-.5 1.5M12 20v2M15 20l.5 1.5"/>
+      </svg>
+    </button>
+    <div id="weather-menu" role="menu" aria-label="Weather ambience"></div>
   </span>
   <button id="btn-theme" title="Cycle theme (t)" aria-label="Cycle theme">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.5 5.5 0 0 1 12 3z"/></svg>
@@ -1374,6 +1512,7 @@ dialog#chapter-dialog .dialog-sub {
           <kbd>←</kbd><kbd>→</kbd><span>step</span>
           <kbd>↑</kbd><kbd>↓</kbd><span>wpm</span>
           <kbd>c</kbd><span>chapters</span>
+          <kbd>w</kbd><span>weather</span>
           <kbd>?</kbd><span>help</span>
         </div>
       </div>
@@ -1393,6 +1532,7 @@ dialog#chapter-dialog .dialog-sub {
     <dt class="kbd-only"><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd class="kbd-only">open a file or paste text</dd>
     <dt class="kbd-only"><kbd>c</kbd></dt><dd class="kbd-only">open chapter picker when headings are available</dd>
     <dt class="kbd-only"><kbd>f</kbd></dt><dd class="kbd-only">choose a reading font — saved to this browser</dd>
+    <dt class="kbd-only"><kbd>w</kbd></dt><dd class="kbd-only">cycle ambience between off, rain, and snow</dd>
     <dt class="kbd-only"><kbd>t</kbd></dt><dd class="kbd-only">cycle through paper, ink, and system themes</dd>
     <dt class="kbd-only"><kbd>?</kbd></dt><dd class="kbd-only">show or hide this card</dd>
 
@@ -1418,16 +1558,26 @@ dialog#chapter-dialog .dialog-sub {
 </dialog>
 
 <script type="module">
-// WASM_INLINE_MARKER: this block gets replaced by the build script
 import init, { WebReader } from './pkg/speed_reader.js';
 await init();
 // END_WASM_INLINE_MARKER
 
 // ─── pdf.js for browser-side PDF text extraction ───
-const pdfjsLib = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.min.mjs');
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.worker.min.mjs';
+let pdfjsLibPromise = null;
+
+async function getPdfJs() {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.min.mjs')
+      .then(pdfjsLib => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.worker.min.mjs';
+        return pdfjsLib;
+      });
+  }
+  return pdfjsLibPromise;
+}
 
 async function extractPdfData(arrayBuffer) {
+  const pdfjsLib = await getPdfJs();
   const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages = [];
   for (let i = 1; i <= doc.numPages; i++) {
@@ -1579,11 +1729,15 @@ let chapterSelection = 0;
 let wpm = 300;
 let imagePauseMs = 3000;
 let timer = null;
-const themes = ['light', 'dark', 'system'];
+const themes = ['light', 'dark', 'sepia', 'dynamic', 'system'];
 let themeIdx = 0;
+const weatherModes = ['none', 'rain', 'snow', 'leaves'];
+let weatherIdx = 0;
+let weatherMode = weatherModes[weatherIdx];
+let weatherParticles = [];
 
 // ─── Persistence (everything stays on-device) ───
-const LS_KEY = { font: 'sr.font', wpm: 'sr.wpm', theme: 'sr.themeIdx' };
+const LS_KEY = { font: 'sr.font', wpm: 'sr.wpm', theme: 'sr.themeIdx', weather: 'sr.weatherIdx' };
 const lsGet = (k, fallback) => { try { const v = localStorage.getItem(k); return v === null ? fallback : v; } catch { return fallback; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
 
@@ -1620,8 +1774,241 @@ const $chapterList = document.getElementById('chapter-list');
 const $chapterButton = document.getElementById('btn-chapters');
 const $card = document.getElementById('input-box');
 const $loadError = document.getElementById('load-error');
+const $weatherCanvas = document.getElementById('weather-canvas');
+const weatherCtx = $weatherCanvas?.getContext('2d') ?? null;
+const $weatherButton = document.getElementById('btn-weather');
+const $weatherMenu = document.getElementById('weather-menu');
+const hasWeather = Boolean($weatherCanvas && weatherCtx && $weatherButton);
 
 let currentFileHash = null;
+
+function resolvedThemeName() {
+  const explicit = document.documentElement.getAttribute('data-theme');
+  if (explicit) return explicit;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function weatherPalette() {
+  switch (resolvedThemeName()) {
+    case 'sepia':
+      return {
+        rain: 'rgba(88, 64, 38, 0.98)',
+        snow: 'rgba(120, 94, 62, 0.9)',
+        leaves: ['rgba(142, 86, 38, 0.92)', 'rgba(168, 106, 52, 0.9)', 'rgba(120, 70, 34, 0.88)'],
+      };
+    case 'dark':
+    case 'dynamic':
+      return {
+        rain: 'rgba(168, 196, 255, 0.98)',
+        snow: 'rgba(255, 255, 255, 0.95)',
+        leaves: ['rgba(214, 136, 74, 0.92)', 'rgba(186, 96, 54, 0.88)', 'rgba(232, 176, 92, 0.84)'],
+      };
+    default:
+      return {
+        rain: 'rgba(68, 92, 128, 0.98)',
+        snow: 'rgba(110, 118, 132, 0.9)',
+        leaves: ['rgba(176, 104, 52, 0.9)', 'rgba(140, 92, 46, 0.88)', 'rgba(198, 128, 70, 0.86)'],
+      };
+  }
+}
+
+class WeatherParticle {
+  constructor(kind) {
+    this.kind = kind;
+    this.reset(true);
+  }
+
+  reset(initial = false) {
+    if (!hasWeather) return;
+    this.x = Math.random() * $weatherCanvas.width;
+    this.y = initial
+      ? Math.random() * $weatherCanvas.height
+      : -Math.random() * $weatherCanvas.height * 0.35;
+    if (this.kind === 'rain') {
+      this.speedY = 11 + Math.random() * 10;
+      this.speedX = -1.8 - Math.random() * 1.2;
+      this.size = 16 + Math.random() * 16;
+      this.alpha = 0.42 + Math.random() * 0.28;
+    } else if (this.kind === 'snow') {
+      this.speedY = 0.9 + Math.random() * 1.8;
+      this.speedX = -0.35 + Math.random() * 0.7;
+      this.size = 1.2 + Math.random() * 2.4;
+      this.alpha = 0.25 + Math.random() * 0.3;
+      this.wobble = Math.random() * Math.PI * 2;
+    } else {
+      this.speedY = 0.8 + Math.random() * 1.4;
+      this.speedX = -0.8 + Math.random() * 1.6;
+      this.size = 4 + Math.random() * 5;
+      this.alpha = 0.32 + Math.random() * 0.28;
+      this.wobble = Math.random() * Math.PI * 2;
+      this.rotation = Math.random() * Math.PI * 2;
+      this.spin = -0.03 + Math.random() * 0.06;
+      this.aspect = 0.45 + Math.random() * 0.25;
+      this.colorIndex = Math.floor(Math.random() * 3);
+    }
+  }
+
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX;
+    if (this.kind === 'snow') {
+      this.wobble += 0.015;
+      this.x += Math.sin(this.wobble) * 0.35;
+    } else if (this.kind === 'leaves') {
+      this.wobble += 0.02;
+      this.rotation += this.spin;
+      this.x += Math.sin(this.wobble) * 0.9;
+    }
+    if (this.y > $weatherCanvas.height + 24 || this.x < -24 || this.x > $weatherCanvas.width + 24) {
+      this.reset();
+    }
+  }
+
+  draw() {
+    if (!hasWeather) return;
+    const palette = weatherPalette();
+    weatherCtx.save();
+    weatherCtx.globalAlpha = this.alpha;
+    if (this.kind === 'rain') {
+      weatherCtx.strokeStyle = palette.rain;
+      weatherCtx.lineWidth = 1.35;
+      weatherCtx.beginPath();
+      weatherCtx.moveTo(this.x, this.y);
+      weatherCtx.lineTo(this.x + this.speedX * 1.5, this.y + this.size);
+      weatherCtx.stroke();
+    } else if (this.kind === 'snow') {
+      weatherCtx.fillStyle = palette.snow;
+      weatherCtx.beginPath();
+      weatherCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      weatherCtx.fill();
+    } else {
+      weatherCtx.translate(this.x, this.y);
+      weatherCtx.rotate(this.rotation);
+      weatherCtx.fillStyle = palette.leaves[this.colorIndex % palette.leaves.length];
+      weatherCtx.beginPath();
+      weatherCtx.ellipse(0, 0, this.size, this.size * this.aspect, 0, 0, Math.PI * 2);
+      weatherCtx.fill();
+      weatherCtx.strokeStyle = 'rgba(82, 50, 28, 0.18)';
+      weatherCtx.lineWidth = 0.8;
+      weatherCtx.beginPath();
+      weatherCtx.moveTo(-this.size * 0.8, 0);
+      weatherCtx.lineTo(this.size * 0.8, 0);
+      weatherCtx.stroke();
+    }
+    weatherCtx.restore();
+  }
+}
+
+function resizeWeatherCanvas() {
+  if (!hasWeather) return;
+  $weatherCanvas.width = window.innerWidth;
+  $weatherCanvas.height = window.innerHeight;
+  weatherParticles.forEach(particle => particle.reset(true));
+}
+
+function syncWeatherButton() {
+  if (!hasWeather) return;
+  const labels = {
+    none: 'Weather ambience off',
+    rain: 'Weather ambience: rain',
+    snow: 'Weather ambience: snow',
+    leaves: 'Weather ambience: leaves',
+  };
+  $weatherButton.setAttribute('aria-label', labels[weatherMode]);
+  $weatherButton.title = `${labels[weatherMode]} · choose ambience (w)`;
+  $weatherButton.classList.toggle('active', weatherMode !== 'none');
+  if ($weatherMenu) {
+    $weatherMenu.querySelectorAll('.weather-option').forEach(el => {
+      el.classList.toggle('active', el.dataset.weatherMode === weatherMode);
+    });
+  }
+}
+
+function initWeather() {
+  if (!hasWeather) return;
+  weatherParticles = [];
+  if (weatherMode === 'none') {
+    document.body.classList.remove('weather-active');
+    syncWeatherButton();
+    return;
+  }
+  document.body.classList.add('weather-active');
+  const count = weatherMode === 'rain' ? 132 : weatherMode === 'snow' ? 140 : 36;
+  for (let i = 0; i < count; i++) {
+    weatherParticles.push(new WeatherParticle(weatherMode));
+  }
+  syncWeatherButton();
+}
+
+function animateWeather() {
+  if (!hasWeather) return;
+  weatherCtx.clearRect(0, 0, $weatherCanvas.width, $weatherCanvas.height);
+  if (weatherMode !== 'none') {
+    for (const particle of weatherParticles) {
+      particle.update();
+      particle.draw();
+    }
+  }
+  requestAnimationFrame(animateWeather);
+}
+
+function applyWeather() {
+  if (!hasWeather) return;
+  weatherMode = weatherModes[weatherIdx] || 'none';
+  initWeather();
+  lsSet(LS_KEY.weather, weatherIdx);
+}
+
+function cycleWeather() {
+  if (!hasWeather) return;
+  weatherIdx = (weatherIdx + 1) % weatherModes.length;
+  applyWeather();
+}
+
+function weatherDescription(mode) {
+  switch (mode) {
+    case 'rain': return 'Thin diagonal rain for darker reading moods';
+    case 'snow': return 'Soft drifting flakes with a quiet cadence';
+    case 'leaves': return 'Sparse falling leaves, especially warm on sepia';
+    default: return 'No ambient particles';
+  }
+}
+
+function buildWeatherMenu() {
+  if (!$weatherMenu) return;
+  $weatherMenu.innerHTML = weatherModes.map(mode =>
+    `<button class="weather-option" data-weather-mode="${mode}" type="button" role="menuitem">`
+    + `<span class="wo-name">${mode[0].toUpperCase()}${mode.slice(1)}</span>`
+    + `<span class="wo-meta">${weatherDescription(mode)}</span>`
+    + `</button>`
+  ).join('');
+  $weatherMenu.querySelectorAll('.weather-option').forEach(el => {
+    el.addEventListener('click', () => {
+      const index = weatherModes.indexOf(el.dataset.weatherMode);
+      if (index >= 0) {
+        weatherIdx = index;
+        applyWeather();
+      }
+      toggleWeatherMenu(false);
+    });
+  });
+  syncWeatherButton();
+}
+
+function toggleWeatherMenu(force) {
+  if (!$weatherMenu || !$weatherButton) return;
+  const open = typeof force === 'boolean' ? force : !$weatherMenu.classList.contains('open');
+  if (open) toggleFontMenu(false);
+  $weatherMenu.classList.toggle('open', open);
+  $weatherButton.classList.toggle('open', open);
+  $weatherButton.setAttribute('aria-expanded', String(open));
+}
+
+if (hasWeather) {
+  window.addEventListener('resize', resizeWeatherCanvas);
+  resizeWeatherCanvas();
+  animateWeather();
+}
 
 async function getFileHash(data) {
   if (!crypto.subtle) {
@@ -2000,6 +2387,12 @@ document.getElementById('file-input').addEventListener('change', (e) => {
 });
 
 document.getElementById('btn-theme').addEventListener('click', cycleTheme);
+if ($weatherButton) {
+  $weatherButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleWeatherMenu();
+  });
+}
 
 document.getElementById('btn-help').addEventListener('click', () => {
   $help.showModal();
@@ -2072,6 +2465,7 @@ function toggleFontMenu(force) {
   const btn = document.getElementById('btn-font');
   const menu = document.getElementById('font-menu');
   const open = typeof force === 'boolean' ? force : !menu.classList.contains('open');
+  if (open) toggleWeatherMenu(false);
   menu.classList.toggle('open', open);
   btn.classList.toggle('open', open);
   btn.setAttribute('aria-expanded', String(open));
@@ -2083,11 +2477,14 @@ document.getElementById('btn-font').addEventListener('click', (e) => {
 });
 document.addEventListener('click', (e) => {
   const fp = document.querySelector('.font-picker');
+  const wp = document.querySelector('.weather-picker');
   if (fp && !fp.contains(e.target)) toggleFontMenu(false);
+  if (wp && !wp.contains(e.target)) toggleWeatherMenu(false);
 });
 
 // ─── Restore persisted state ───
 buildFontMenu();
+buildWeatherMenu();
 applyFont(lsGet(LS_KEY.font, DEFAULT_FONT_KEY));
 
 const persistedWpm = parseInt(lsGet(LS_KEY.wpm, '300'), 10);
@@ -2098,6 +2495,14 @@ const persistedTheme = parseInt(lsGet(LS_KEY.theme, '0'), 10);
 if (!Number.isNaN(persistedTheme) && persistedTheme >= 0 && persistedTheme < themes.length) {
   themeIdx = persistedTheme;
   applyTheme();
+}
+
+const persistedWeather = parseInt(lsGet(LS_KEY.weather, '0'), 10);
+if (!Number.isNaN(persistedWeather) && persistedWeather >= 0 && persistedWeather < weatherModes.length) {
+  weatherIdx = persistedWeather;
+}
+if (hasWeather) {
+  applyWeather();
 }
 
 // --- Drag & drop (supports multi-file: doc + images) ---
@@ -2205,6 +2610,9 @@ document.addEventListener('keydown', e => {
       break;
     case 't':
       cycleTheme();
+      break;
+    case 'w':
+      toggleWeatherMenu();
       break;
     case '?':
       $help.showModal();
