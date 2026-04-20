@@ -21,6 +21,8 @@
 <meta name="twitter:title" content="Speed reader — Accelerate to 3x speed">
 <meta name="twitter:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
 <meta name="twitter:image" content="https://tinywins.us/og.svg">
+<!-- Optional: set your GA4 measurement ID, e.g. G-XXXXXXXXXX -->
+<meta name="google-analytics-measurement-id" content="">
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Noto+Serif:ital,wght@0,400;0,500;1,400&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap');
@@ -1622,6 +1624,44 @@ import init, { WebReader } from './pkg/speed_reader.js';
 await init();
 // END_WASM_INLINE_MARKER
 
+// ─── Optional Google Analytics (GA4) ───
+const GA_MEASUREMENT_ID = (
+  document
+    .querySelector('meta[name="google-analytics-measurement-id"]')
+    ?.getAttribute('content') || ''
+).trim();
+
+let gaReady = false;
+
+function initAnalytics() {
+  if (!GA_MEASUREMENT_ID) return;
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function gtag(...args) {
+    window.dataLayer.push(args);
+  };
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`;
+  script.onload = () => {
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID, {
+      anonymize_ip: true,
+      send_page_view: true,
+    });
+    gaReady = true;
+  };
+  document.head.appendChild(script);
+}
+
+function trackEvent(name, params = {}) {
+  if (!gaReady || typeof window.gtag !== 'function') return;
+  window.gtag('event', name, params);
+}
+
+initAnalytics();
+
 // ─── pdf.js for browser-side PDF text extraction ───
 let pdfjsLibPromise = null;
 
@@ -2317,6 +2357,11 @@ function stopTimer() {
 function togglePlay() {
   if (!reader || reader.total() === 0) return;
   reader.togglePlay();
+  trackEvent(reader.isPlaying() ? 'reader_play' : 'reader_pause', {
+    wpm,
+    index: reader.index(),
+    total_chunks: reader.total(),
+  });
   render();
   if (reader.isPlaying()) scheduleNext();
   else stopTimer();
@@ -2351,6 +2396,10 @@ function setReader(newReader, nextChapters = []) {
   $loadError.style.display = 'none';
   enterRsvpMode();
   render();
+  trackEvent('reader_loaded', {
+    total_chunks: reader.total(),
+    chapters: chapters.length,
+  });
   // Auto-start after the cinematic entrance settles.
   setTimeout(() => {
     if (reader && reader.total() > 0 && !reader.isPlaying()) {
@@ -2372,6 +2421,7 @@ async function loadMarkdown(md) {
   const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
   const webReader = new WebReader(md, lastIdx);
   setReader(webReader, webReader.chapters());
+  trackEvent('document_loaded', { source_type: 'markdown' });
 }
 
 async function loadPlainText(text) {
@@ -2380,6 +2430,7 @@ async function loadPlainText(text) {
   const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
   const webReader = WebReader.fromText(text, lastIdx);
   setReader(webReader, webReader.chapters());
+  trackEvent('document_loaded', { source_type: 'plain_text' });
 }
 
 async function loadFile(file) {
@@ -2399,6 +2450,7 @@ async function loadFile(file) {
       const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
       const webReader = WebReader.fromDocx(new Uint8Array(buf), lastIdx);
       setReader(webReader, webReader.chapters());
+      trackEvent('document_loaded', { source_type: 'docx' });
     } else if (name.endsWith('.pdf')) {
       const buf = await file.arrayBuffer();
       currentFileHash = await getFileHash(new Uint8Array(buf));
@@ -2408,6 +2460,7 @@ async function loadFile(file) {
       const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
       const webReader = WebReader.fromTextWithSections(text, sections, lastIdx);
       setReader(webReader, webReader.chapters());
+      trackEvent('document_loaded', { source_type: 'pdf' });
     } else {
       const text = await file.text();
       $mdInput.value = text;
@@ -2442,6 +2495,7 @@ function setWpm(next) {
   wpm = Math.max(50, Math.min(1500, next));
   $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
   lsSet(LS_KEY.wpm, wpm);
+  trackEvent('wpm_changed', { wpm });
 }
 
 document.getElementById('btn-wpm-up').addEventListener('click', () => setWpm(wpm + 25));
@@ -2494,6 +2548,7 @@ function cycleTheme() {
   themeIdx = (themeIdx + 1) % themes.length;
   applyTheme();
   lsSet(LS_KEY.theme, themeIdx);
+  trackEvent('theme_changed', { theme: themes[themeIdx] });
 }
 
 // ─── Font picker ───
