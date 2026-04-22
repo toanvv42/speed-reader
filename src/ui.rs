@@ -8,7 +8,7 @@ use ratatui::{
 use ratatui_image::{Resize, StatefulImage};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::app::{App, Mode};
+use crate::app::{App, Mode, RecentFile};
 use speed_reader::reader::{Chunk, ChunkKind};
 use speed_reader::text::truncate_start;
 use speed_reader::theme::Palette;
@@ -46,7 +46,7 @@ fn draw_reader(f: &mut Frame, app: &mut App, area: Rect, p: &Palette) {
     match current_kind {
         Some(ChunkKind::Image) => draw_image_body(f, app, body, current_url, p),
         Some(_) => draw_text_body(f, app, body, p),
-        None => draw_empty_body(f, body, p),
+        None => draw_empty_body(f, app, body, p),
     }
 
     f.render_widget(render_status(app, p), status);
@@ -61,7 +61,8 @@ fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
     let inner = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage(45),
+            Constraint::Percentage(42),
+            Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Min(0),
@@ -69,16 +70,31 @@ fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
         .split(body);
 
     if let Some(c) = app.reader.current() {
+        let (prev, next) = app.surrounding_words();
+        let context = Paragraph::new(Line::from(vec![
+            Span::styled(
+                prev.map(|word| format!("… {} ", truncate_start(word, 16))).unwrap_or_default(),
+                Style::default().fg(p.dim),
+            ),
+            Span::styled("•", Style::default().fg(p.accent)),
+            Span::styled(
+                next.map(|word| format!(" {} …", truncate_start(word, 16))).unwrap_or_default(),
+                Style::default().fg(p.dim),
+            ),
+        ]))
+        .alignment(Alignment::Center);
+        f.render_widget(context, inner[1]);
+
         let line = render_chunk(c, p);
         let word = Paragraph::new(line).alignment(Alignment::Center);
-        f.render_widget(word, inner[1]);
+        f.render_widget(word, inner[2]);
 
         let hint = kind_hint(c.kind);
         if !hint.is_empty() {
             let hint_para =
                 Paragraph::new(Line::from(Span::styled(hint, Style::default().fg(p.dim))))
                     .alignment(Alignment::Center);
-            f.render_widget(hint_para, inner[2]);
+            f.render_widget(hint_para, inner[3]);
         }
     }
 }
@@ -118,31 +134,59 @@ fn draw_code_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
     f.render_widget(hint, outer[2]);
 }
 
-fn draw_empty_body(f: &mut Frame, body: Rect, p: &Palette) {
+fn draw_empty_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
+    let recent = app.recent_files(5);
     let inner = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage(45),
-            Constraint::Length(1),
+            Constraint::Percentage(28),
+            Constraint::Length(2),
+            Constraint::Length(if recent.is_empty() { 0 } else { 1 }),
+            Constraint::Length(recent.len() as u16),
             Constraint::Min(0),
         ])
         .split(body);
 
-    let empty = Paragraph::new(Line::from(vec![
-        Span::styled("press ", Style::default().fg(p.dim)),
-        Span::styled(
-            "Ctrl+O",
-            Style::default().fg(p.accent).add_modifier(Modifier::BOLD),
-        ),
-        Span::styled(" or ", Style::default().fg(p.dim)),
-        Span::styled(
-            "o",
-            Style::default().fg(p.accent).add_modifier(Modifier::BOLD),
-        ),
-        Span::styled(" to open a file", Style::default().fg(p.dim)),
-    ]))
+    let empty = Paragraph::new(vec![
+        Line::from(vec![
+            Span::styled("press ", Style::default().fg(p.dim)),
+            Span::styled(
+                "Ctrl+O",
+                Style::default().fg(p.accent).add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" or ", Style::default().fg(p.dim)),
+            Span::styled(
+                "o",
+                Style::default().fg(p.accent).add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" to open a file", Style::default().fg(p.dim)),
+        ]),
+        Line::from(Span::styled(
+            "RSVP shows one word at a time. Start around 300 wpm.",
+            Style::default().fg(p.dim),
+        )),
+    ])
     .alignment(Alignment::Center);
     f.render_widget(empty, inner[1]);
+
+    if recent.is_empty() {
+        return;
+    }
+
+    let title = Paragraph::new(Line::from(Span::styled(
+        "Recent files — press 1..5 to resume",
+        Style::default().fg(p.dim).add_modifier(Modifier::BOLD),
+    )))
+    .alignment(Alignment::Center);
+    f.render_widget(title, inner[2]);
+
+    let items: Vec<Line> = recent
+        .iter()
+        .enumerate()
+        .map(|(i, item)| render_recent_line(i, item, p, inner[3].width as usize))
+        .collect();
+    let recent_list = Paragraph::new(items).alignment(Alignment::Center);
+    f.render_widget(recent_list, inner[3]);
 }
 
 fn draw_image_body(f: &mut Frame, app: &mut App, body: Rect, url: Option<String>, p: &Palette) {
@@ -260,13 +304,22 @@ fn render_status(app: &App, p: &Palette) -> Paragraph<'static> {
         .to_string();
     let msg = app.status_msg.clone().unwrap_or_default();
     let eta = format_remaining(app.reading_time_remaining());
+    let preset = app.preset.label();
+    let section = app
+        .current_chapter()
+        .map(|chapter| truncate_start(&chapter.title, 24).to_string())
+        .unwrap_or_else(|| "—".to_string());
+    let section_progress = app
+        .chapter_progress()
+        .map(|(current, total)| format!("{current}/{total}"))
+        .unwrap_or_else(|| "—".to_string());
     let text = if msg.is_empty() {
         format!(
-            " {}  {}  {} wpm  {}/{}  ⏱ {} left   c chapters  ?help  Ctrl+O open  t theme  q quit ",
-            play, file, app.wpm, idx, total, eta
+            " {}  {}  {}  {} wpm  {}/{}  § {} {}  ⏱ {} left   p preset  c chapters  ?help ",
+            play, file, preset, app.wpm, idx, total, section, section_progress, eta
         )
     } else {
-        format!(" {}  {}  ⏱ {} left   [{}] ", play, file, eta, msg)
+        format!(" {}  {}  {}  ⏱ {} left   [{}] ", play, file, preset, eta, msg)
     };
     Paragraph::new(text).style(Style::default().fg(p.status_fg).bg(p.status_bg))
 }
@@ -364,7 +417,7 @@ fn draw_picker(f: &mut Frame, app: &App, area: Rect, p: &Palette) {
 
 fn draw_help(f: &mut Frame, area: Rect, p: &Palette) {
     let w = 54u16.min(area.width.saturating_sub(4)).max(30);
-    let h = 15u16.min(area.height.saturating_sub(2)).max(10);
+    let h = 17u16.min(area.height.saturating_sub(2)).max(12);
     let x = area.width.saturating_sub(w) / 2;
     let y = area.height.saturating_sub(h) / 2;
     let rect = Rect::new(x, y, w, h);
@@ -372,11 +425,16 @@ fn draw_help(f: &mut Frame, area: Rect, p: &Palette) {
     f.render_widget(Clear, rect);
 
     let lines = vec![
+        Line::from("  RSVP shows one word at a time."),
+        Line::from("  start around 250-350 wpm, then adjust."),
+        Line::from(""),
         Line::from("  Space      play / pause"),
         Line::from("  ← → h l    step word"),
         Line::from("  ↑ ↓ + -    WPM ±25"),
         Line::from("  Ctrl+O o   open file"),
+        Line::from("  1..5       reopen recent file"),
         Line::from("  c          open chapter picker"),
+        Line::from("  p          cycle preset (gentle/standard/technical/study)"),
         Line::from("  t          cycle theme (dark · light · system)"),
         Line::from("  ?          toggle this help"),
         Line::from("  q / Esc    quit"),
@@ -456,4 +514,20 @@ fn draw_chapter_picker(f: &mut Frame, app: &App, area: Rect, p: &Palette) {
         state.select(Some(app.chapter_picker.selected));
     }
     f.render_stateful_widget(list, rows[2], &mut state);
+}
+
+fn render_recent_line(i: usize, item: &RecentFile, p: &Palette, width: usize) -> Line<'static> {
+    let parent = truncate_start(&item.parent_display(), width.saturating_sub(36)).to_string();
+    Line::from(vec![
+        Span::styled(
+            format!(" {} ", i + 1),
+            Style::default().fg(p.accent).add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(item.file_name(), Style::default().fg(p.fg)),
+        Span::styled(
+            format!("  resume @ {}  ", item.index + 1),
+            Style::default().fg(p.dim),
+        ),
+        Span::styled(parent, Style::default().fg(p.dim)),
+    ])
 }

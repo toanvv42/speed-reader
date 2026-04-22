@@ -3,23 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Speed reader — Accelerate to 3x speed</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <meta name="description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
-  <meta name="description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
+<title>speed-reader — a quiet reading instrument</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="description" content="A quiet reading instrument for long-form text. Read with focus, one word at a time. Private by design.">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tinywins.us/">
-<meta property="og:title" content="Speed reader — Accelerate to 3x speed">
-<meta property="og:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
+<meta property="og:title" content="speed-reader — a quiet reading instrument">
+<meta property="og:description" content="A quiet reading instrument for long-form text. Read with focus, one word at a time. Private by design.">
 <meta property="og:image" content="https://tinywins.us/og.svg">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:url" content="https://tinywins.us/">
-<meta name="twitter:title" content="Speed reader — Accelerate to 3x speed">
-<meta name="twitter:description" content="A quiet reading instrument. Focus and read faster by showing one word at a time. Private by design.">
+<meta name="twitter:title" content="speed-reader — a quiet reading instrument">
+<meta name="twitter:description" content="A quiet reading instrument for long-form text. Read with focus, one word at a time. Private by design.">
 <meta name="twitter:image" content="https://tinywins.us/og.svg">
 
 <style>
@@ -379,6 +378,24 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   color: var(--ink-dim);
   margin-left: 0.15rem;
 }
+#progress {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.1;
+  gap: 0.12rem;
+}
+#progress .progress-main {
+  white-space: nowrap;
+}
+#progress .progress-sub {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  color: var(--ink-dim);
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ─────────── Font picker (popover) ─────────── */
 .font-picker {
@@ -600,12 +617,25 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
 
 .landing {
   width: min(1180px, 100%);
-  padding: clamp(2rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem);
+  padding: clamp(1.25rem, 3vw, 2.4rem) clamp(1.25rem, 4vw, 3rem);
   display: grid;
   grid-template-columns: 1fr;
-  gap: clamp(2rem, 5vw, 4.5rem);
+  gap: clamp(1.2rem, 3vw, 2.6rem);
   align-items: center;
   position: relative;
+}
+.landing::before {
+  content: "";
+  position: absolute;
+  inset: clamp(1rem, 3vw, 2rem);
+  border: 1px solid color-mix(in srgb, var(--rule) 82%, transparent);
+  border-radius: 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+.landing > * {
+  position: relative;
+  z-index: 1;
 }
 @media (min-width: 880px) {
   .landing { grid-template-columns: minmax(260px, 440px) 1fr; }
@@ -616,14 +646,14 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.7rem;
   opacity: 0;
   animation: fade-up 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms both;
 }
 
 .boy-tree {
   width: 100%;
-  max-width: 380px;
+  max-width: 300px;
   height: auto;
   display: block;
 }
@@ -668,8 +698,8 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
 .hero-content {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  max-width: 560px;
+  gap: 1rem;
+  max-width: 620px;
   opacity: 0;
   animation: fade-up 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 260ms both;
 }
@@ -697,14 +727,44 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   background: var(--rule-strong);
 }
 
+.eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper-raised) 75%, var(--paper-deep) 25%);
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
+.eyebrow-pill::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
 .tagline {
   font-family: var(--serif);
   font-optical-sizing: auto;
-  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-size: clamp(2.2rem, 4.6vw, 3.5rem);
   font-weight: 400;
-  line-height: 1.02;
-  letter-spacing: -0.02em;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
   color: var(--ink);
+  max-width: 10ch;
 }
 .tagline em {
   font-style: italic;
@@ -722,37 +782,117 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
 
 .lede {
   font-family: var(--serif);
-  font-size: 1.0625rem;
-  line-height: 1.55;
+  font-size: 1rem;
+  line-height: 1.5;
   color: var(--ink-soft);
-  max-width: 38ch;
+  max-width: 40ch;
+}
+
+.lede strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.value-card {
+  padding: 0.7rem 0.8rem;
+  border-radius: 14px;
+  border: 1px solid var(--rule);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--paper-raised) 92%, transparent), color-mix(in srgb, var(--paper) 88%, var(--paper-deep) 12%));
+  box-shadow: var(--shadow-sm);
+}
+
+.value-card-label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  margin-bottom: 0.4rem;
+}
+
+.value-card strong {
+  display: block;
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 0.12rem;
+}
+
+.value-card p {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
 }
 
 /* ─────────── The Card ─────────── */
 .card {
   background: var(--paper-raised);
   border: 1px solid var(--rule);
-  border-radius: 14px;
-  padding: 1.4rem;
+  border-radius: 20px;
+  padding: 1.15rem;
   box-shadow:
-    0 0 0 6px var(--paper-deep),
+    0 0 0 8px color-mix(in srgb, var(--paper-deep) 85%, transparent),
     var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  transition: box-shadow 260ms ease, border-color 260ms ease;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 260ms ease, border-color 260ms ease, transform 260ms ease;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 40%, transparent), transparent);
+  opacity: 0.9;
 }
 .card:focus-within {
   border-color: var(--rule-strong);
   box-shadow:
-    0 0 0 6px var(--paper-deep),
+    0 0 0 8px color-mix(in srgb, var(--paper-deep) 85%, transparent),
     var(--shadow-lg);
+  transform: translateY(-1px);
 }
 .card.drag-over {
   border-color: var(--accent);
   box-shadow:
-    0 0 0 6px rgba(184, 69, 30, 0.06),
+    0 0 0 8px rgba(184, 69, 30, 0.08),
     var(--shadow-lg);
+}
+
+.card-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.card-kicker span {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.card-kicker strong {
+  font-family: var(--serif);
+  font-size: 0.82rem;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ink-soft);
 }
 
 .card-head {
@@ -779,10 +919,17 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
 .card-tabs span::before { content: "·"; margin-right: 0.4rem; color: var(--rule-strong); }
 .card-tabs span:first-of-type::before { content: ""; margin: 0; }
 
+.action-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 /* Notebook-page textarea */
 #md-input {
   width: 100%;
-  height: 190px;
+  height: 132px;
   background:
     linear-gradient(var(--paper-raised), var(--paper-raised)) padding-box;
   color: var(--ink);
@@ -848,6 +995,28 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
 .btn-primary:active { transform: translateY(0); }
 .btn-primary .arrow { transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .btn-primary:hover .arrow { transform: translateX(3px); }
+
+.btn-secondary {
+  background: var(--paper);
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+  padding: 0.72rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+.btn-secondary:hover {
+  border-color: var(--rule-strong);
+  background: var(--paper-deep);
+  color: var(--ink);
+}
 
 .file-link {
   font-family: var(--serif);
@@ -961,6 +1130,106 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   padding: 1px 6px;
   font-size: 0.7rem;
   color: var(--ink-soft);
+}
+
+.quick-points {
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 0.86rem;
+}
+.quick-points li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.quick-points strong {
+  color: var(--accent);
+  font-weight: 600;
+  min-width: 3.8rem;
+}
+
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+.preset-row-label {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.preset-chip {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink-soft);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+.preset-chip:hover {
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+.preset-chip.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.proof-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+}
+
+.proof-item {
+  padding: 0.58rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--rule) 88%, transparent);
+  background: color-mix(in srgb, var(--paper) 92%, var(--paper-deep) 8%);
+}
+
+.proof-item strong {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 0.28rem;
+}
+
+.proof-item span {
+  display: block;
+  font-family: var(--serif);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+@media (min-width: 880px) and (max-height: 940px) {
+  .landing {
+    padding-block: 1rem;
+    gap: 1.2rem;
+  }
+  .boy-tree { max-width: 250px; }
+  .hero-content { gap: 0.8rem; }
+  .tagline { font-size: clamp(2rem, 4vw, 3rem); }
+  .lede { font-size: 0.95rem; line-height: 1.45; }
+  .value-grid { gap: 0.45rem; }
+  .value-card p { display: none; }
+  .proof-strip { display: none; }
+  #md-input { height: 112px; }
 }
 
 /* ─────────── Help dialog ─────────── */
@@ -1165,6 +1434,8 @@ dialog#chapter-dialog .dialog-sub {
   .hero-content      { order: 2; }
   .boy-tree          { max-width: 260px; }
   .tagline           { font-size: clamp(2rem, 8vw, 2.8rem); }
+  .value-grid,
+  .proof-strip       { grid-template-columns: 1fr; }
   .meta              { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 }
 
@@ -1172,9 +1443,13 @@ dialog#chapter-dialog .dialog-sub {
 @media (max-width: 520px) {
   /* Landing page */
   .landing { padding: 1.5rem 1rem; gap: 1.5rem; }
+  .landing::before { inset: 0.35rem; border-radius: 22px; }
   .boy-tree { max-width: 180px; }
   .hero-caption { font-size: 0.78rem; }
   .lede { font-size: 0.95rem; }
+  .quick-points { font-size: 0.82rem; }
+  .value-grid,
+  .proof-strip { grid-template-columns: 1fr; }
   .card { padding: 1rem; gap: 0.75rem; }
   #md-input { height: 140px; font-size: 0.92rem; }
   .card-tabs { display: none; }
@@ -1214,7 +1489,7 @@ dialog#chapter-dialog .dialog-sub {
       "prev play play next"
       "slower wpm wpm faster"
       "open progress progress chapters"
-      "font weather theme help";
+      "font preset theme help";
     justify-items: stretch;
     align-items: center;
     border-top-color: var(--rule-strong);
@@ -1264,11 +1539,12 @@ dialog#chapter-dialog .dialog-sub {
 
   /* Row 4: visual + support controls */
   .font-picker    { grid-area: font; width: 100%; }
-  .weather-picker { grid-area: weather; width: 100%; }
+  .weather-picker { display: none; }
+  #btn-preset     { grid-area: preset; }
   #btn-theme      { grid-area: theme; }
   #btn-help       { grid-area: help; }
   #btn-font,
-  #btn-weather,
+  #btn-preset,
   #btn-theme {
     height: 2.65rem;
     border-color: var(--rule);
@@ -1411,6 +1687,10 @@ dialog#chapter-dialog .dialog-sub {
 
   <span class="divider"></span>
 
+  <button id="btn-preset" title="Cycle preset (p)" aria-label="Cycle preset">std</button>
+
+  <span class="divider"></span>
+
   <button id="btn-chapters" title="Chapters (c)" aria-label="Open chapters" hidden>
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M6 5h12M6 12h12M6 19h12"/>
@@ -1531,20 +1811,45 @@ dialog#chapter-dialog .dialog-sub {
 
     <!-- Hero content + card -->
     <section class="hero-content">
-      <span class="wordmark">Speed&nbsp;Reader</span>
+      <div class="eyebrow-row">
+        <span class="wordmark">Speed&nbsp;Reader</span>
+        <span class="eyebrow-pill">Private by design</span>
+      </div>
 
       <h1 class="tagline">
-        <span class="rule"></span>Quiet your mind.<br>
-        <em>Accelerate</em> your story.
+        <span class="rule"></span>A world quieter<br>
+        <em>than scrolling.</em>
       </h1>
 
       <p class="lede">
-        Paste a passage, drop a file, or open a book. Read one word at a time —
-        the way ideas want to be absorbed.
+        Open a local document, try the built-in sample, or paste a passage.
+        <strong>Read one word at a time</strong> so attention stays with the sentence instead of leaking into scanning, tabs, and interface noise.
       </p>
+
+      <div class="value-grid">
+        <article class="value-card">
+          <span class="value-card-label">Focus</span>
+          <strong>Less visual drift</strong>
+          <p>The reading surface stays calm, with chapter context and pace controls close at hand.</p>
+        </article>
+        <article class="value-card">
+          <span class="value-card-label">Formats</span>
+          <strong>Real documents</strong>
+          <p>Markdown, plain text, docx, and pdf can all be opened directly in the browser.</p>
+        </article>
+        <article class="value-card">
+          <span class="value-card-label">Privacy</span>
+          <strong>Local-first</strong>
+          <p>Your files stay in this browser. No account, upload step, or server round-trip required.</p>
+        </article>
+      </div>
 
       <!-- Shadcn-style card -->
       <div id="input-box" class="card">
+        <div class="card-kicker">
+          <span>Start in under ten seconds</span>
+          <strong>Sample, paste, or open a file</strong>
+        </div>
         <div class="card-head">
           <label class="card-label" for="md-input">Your text</label>
           <div class="card-tabs">
@@ -1553,16 +1858,26 @@ dialog#chapter-dialog .dialog-sub {
         </div>
         <textarea id="md-input" placeholder="Paste a passage, pour in a chapter, or leave this blank and drop a file…"></textarea>
         <div class="card-actions">
-          <button id="btn-load" class="btn-primary">
-            <span>Begin reading</span>
-            <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14M13 6l6 6-6 6"/>
-            </svg>
-          </button>
+          <div class="action-cluster">
+            <button id="btn-sample" class="btn-primary" type="button">
+              <span>Try the sample</span>
+              <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            </button>
+            <button id="btn-load" class="btn-secondary" type="button">Read this text</button>
+          </div>
           <label class="file-link" for="file-input">
             <input type="file" id="file-input" accept=".md,.markdown,.mdx,.txt,.docx,.pdf" hidden>
-            or open a file…
+            open a local file…
           </label>
+        </div>
+        <div class="preset-row" aria-label="Reading presets">
+          <span class="preset-row-label">Preset</span>
+          <button type="button" class="preset-chip active" data-preset="standard">standard</button>
+          <button type="button" class="preset-chip" data-preset="gentle">gentle</button>
+          <button type="button" class="preset-chip" data-preset="technical">technical</button>
+          <button type="button" class="preset-chip" data-preset="study">study</button>
         </div>
         <p id="drop-hint">Drag &amp; drop a <kbd>.md</kbd> <kbd>.txt</kbd> <kbd>.docx</kbd> <kbd>.pdf</kbd> anywhere on this page.</p>
         <p id="load-error"></p>
@@ -1570,6 +1885,20 @@ dialog#chapter-dialog .dialog-sub {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
           <span><strong>Private by design.</strong> <em>Your text never leaves this browser.</em></span>
         </span>
+        <div class="proof-strip" aria-label="What you can do here">
+          <div class="proof-item">
+            <strong>Sample</strong>
+            <span>Launch instantly and feel the pacing before opening your own file.</span>
+          </div>
+          <div class="proof-item">
+            <strong>Chapters</strong>
+            <span>Jump by heading or section when structure is available.</span>
+          </div>
+          <div class="proof-item">
+            <strong>Presets</strong>
+            <span>Switch between gentle, standard, technical, and study in one click.</span>
+          </div>
+        </div>
       </div>
 
       <div class="meta">
@@ -1578,6 +1907,7 @@ dialog#chapter-dialog .dialog-sub {
           <kbd>Space</kbd><span>play</span>
           <kbd>←</kbd><kbd>→</kbd><span>step</span>
           <kbd>↑</kbd><kbd>↓</kbd><span>wpm</span>
+          <kbd>p</kbd><span>preset</span>
           <kbd>c</kbd><span>chapters</span>
           <kbd>w</kbd><span>weather</span>
           <kbd>?</kbd><span>help</span>
@@ -1597,6 +1927,7 @@ dialog#chapter-dialog .dialog-sub {
     <dt class="kbd-only"><kbd>←</kbd> <kbd>→</kbd> / <kbd>h</kbd> <kbd>l</kbd></dt><dd class="kbd-only">step by one word</dd>
     <dt class="kbd-only"><kbd>↑</kbd> <kbd>↓</kbd> / <kbd>+</kbd> <kbd>−</kbd></dt><dd class="kbd-only">adjust reading pace by 25 wpm</dd>
     <dt class="kbd-only"><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd class="kbd-only">open a file or paste text</dd>
+    <dt class="kbd-only"><kbd>p</kbd></dt><dd class="kbd-only">cycle reading presets and reset pace</dd>
     <dt class="kbd-only"><kbd>c</kbd></dt><dd class="kbd-only">open chapter picker when headings are available</dd>
     <dt class="kbd-only"><kbd>f</kbd></dt><dd class="kbd-only">choose a reading font — saved to this browser</dd>
     <dt class="kbd-only"><kbd>w</kbd></dt><dd class="kbd-only">cycle ambience between off, rain, and snow</dd>
@@ -1606,6 +1937,7 @@ dialog#chapter-dialog .dialog-sub {
     <dt class="touch-only">Tap</dt><dd class="touch-only">play or pause</dd>
     <dt class="touch-only">Swipe ← →</dt><dd class="touch-only">step backward or forward one word</dd>
     <dt class="touch-only">− / + buttons</dt><dd class="touch-only">adjust reading pace by 25 wpm</dd>
+    <dt class="touch-only">Preset</dt><dd class="touch-only">switch between gentle, standard, technical, and study</dd>
     <dt class="touch-only">Open</dt><dd class="touch-only">load another file or paste text</dd>
     <dt class="touch-only">Font / Theme</dt><dd class="touch-only">customize readability for this device</dd>
   </dl>
@@ -1802,9 +2134,45 @@ const weatherModes = ['none', 'rain', 'snow', 'leaves'];
 let weatherIdx = 0;
 let weatherMode = weatherModes[weatherIdx];
 let weatherParticles = [];
+const PRESETS = [
+  { key: 'gentle', label: 'gentle', short: 'gnt' },
+  { key: 'standard', label: 'standard', short: 'std' },
+  { key: 'technical', label: 'technical', short: 'tec' },
+  { key: 'study', label: 'study', short: 'stdy' },
+];
+let presetIdx = 1;
+const WEB_SAMPLE_TEXT = `# A Quiet Reading Instrument
+
+This built-in sample is here so you can test the web reader without finding a file first.
+
+## Start
+
+Speed-reader shows one word at a time so you can stay with the sentence instead of scanning the page.
+
+Try the presets. Standard is balanced. Technical gives code and structure more breathing room. Study is the most deliberate.
+
+## English
+
+Good reading tools should make the page quieter, not louder. They should help attention settle instead of asking you to manage another interface.
+
+## Tiếng Việt
+
+Đây là đoạn văn ngắn để kiểm tra trải nghiệm đọc trên web. Nếu nhịp điệu ổn định và phần chuyển chương rõ ràng, việc đọc sẽ dễ chịu hơn nhiều.
+
+## Code
+
+\`\`\`rust
+fn main() {
+    println!("hello from the web reader");
+}
+\`\`\`
+
+## Finish
+
+Use chapter navigation, change the preset, and then drop one of your own files into the page.`;
 
 // ─── Persistence (everything stays on-device) ───
-const LS_KEY = { font: 'sr.font', wpm: 'sr.wpm', theme: 'sr.themeIdx', weather: 'sr.weatherIdx' };
+const LS_KEY = { font: 'sr.font', wpm: 'sr.wpm', theme: 'sr.themeIdx', weather: 'sr.weatherIdx', preset: 'sr.preset' };
 const lsGet = (k, fallback) => { try { const v = localStorage.getItem(k); return v === null ? fallback : v; } catch { return fallback; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
 
@@ -1831,6 +2199,8 @@ const $play = document.getElementById('btn-play');
 const $wpmDisplay = document.getElementById('wpm-display');
 const $progress = document.getElementById('progress');
 const $progressBar = document.getElementById('progress-bar');
+const $presetButton = document.getElementById('btn-preset');
+const $presetChips = [...document.querySelectorAll('.preset-chip')];
 const $overlay = document.getElementById('input-overlay');
 const $mdInput = document.getElementById('md-input');
 const $help = document.getElementById('help-dialog');
@@ -1849,6 +2219,39 @@ const $weatherMenu = document.getElementById('weather-menu');
 const hasWeather = Boolean($weatherCanvas && weatherCtx && $weatherButton);
 
 let currentFileHash = null;
+
+function currentPreset() {
+  return PRESETS[presetIdx] || PRESETS[1];
+}
+
+function syncPresetUi() {
+  const preset = currentPreset();
+  if ($presetButton) {
+    $presetButton.textContent = preset.short;
+    $presetButton.title = `Preset: ${preset.label} (p)`;
+    $presetButton.setAttribute('aria-label', `Preset: ${preset.label}`);
+  }
+  $presetChips.forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.preset === preset.key);
+  });
+}
+
+function applyPreset(index, { syncWpm = true } = {}) {
+  if (index < 0 || index >= PRESETS.length) return;
+  presetIdx = index;
+  const preset = currentPreset();
+  if (syncWpm) {
+    setWpm(WebReader.presetDefaultWpm(preset.key));
+  }
+  lsSet(LS_KEY.preset, preset.key);
+  syncPresetUi();
+  render();
+  if (reader && reader.isPlaying()) scheduleNext();
+}
+
+function cyclePreset() {
+  applyPreset((presetIdx + 1) % PRESETS.length);
+}
 
 function resolvedThemeName() {
   const explicit = document.documentElement.getAttribute('data-theme');
@@ -2229,6 +2632,7 @@ function render() {
     document.body.classList.remove('code-mode');
     $progress.innerHTML = '0<em>/</em>0';
     $progressBar.style.width = '0%';
+    syncPresetUi();
     return;
   }
 
@@ -2287,11 +2691,18 @@ function render() {
 
   const i = reader.index();
   const total = reader.total();
-  const remaining = formatRemaining(reader.remainingDurationMs(wpm, imagePauseMs));
-  $progress.innerHTML = `${i + 1}<em>/</em>${total} · <em>${remaining}</em>`;
+  const remaining = formatRemaining(
+    reader.remainingDurationWithPresetMs(wpm, currentPreset().key, imagePauseMs)
+  );
+  const chapterIndex = currentChapterSourceIndex();
+  const chapterLabel = chapterIndex >= 0 ? chapters[chapterIndex].title : currentPreset().label;
+  $progress.innerHTML =
+    `<span class="progress-main">${i + 1}<em>/</em>${total} · <em>${remaining}</em></span>` +
+    `<span class="progress-sub">${esc(chapterLabel)} · ${currentPreset().label}</span>`;
   $progressBar.style.width = total > 1 ? `${((i) / (total - 1)) * 100}%` : '0%';
   $play.classList.toggle('playing', reader.isPlaying());
   $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
+  syncPresetUi();
 }
 
 function esc(s) {
@@ -2301,7 +2712,7 @@ function esc(s) {
 function scheduleNext() {
   stopTimer();
   if (!reader || !reader.isPlaying()) return;
-  const ms = reader.chunkDurationMs(wpm, imagePauseMs);
+  const ms = reader.chunkDurationWithPresetMs(wpm, currentPreset().key, imagePauseMs);
   timer = setTimeout(tick, ms);
 }
 
@@ -2464,6 +2875,20 @@ document.getElementById('btn-chapters').addEventListener('click', openChapterDia
 document.getElementById('btn-load').addEventListener('click', () => {
   const md = $mdInput.value.trim();
   if (md) loadMarkdown(md);
+  else loadMarkdown(WEB_SAMPLE_TEXT);
+});
+
+document.getElementById('btn-sample').addEventListener('click', () => {
+  $mdInput.value = WEB_SAMPLE_TEXT;
+  loadMarkdown(WEB_SAMPLE_TEXT);
+});
+
+$presetButton.addEventListener('click', cyclePreset);
+$presetChips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    const index = PRESETS.findIndex(preset => preset.key === chip.dataset.preset);
+    if (index >= 0) applyPreset(index);
+  });
 });
 
 document.getElementById('file-input').addEventListener('change', (e) => {
@@ -2576,6 +3001,13 @@ applyFont(lsGet(LS_KEY.font, DEFAULT_FONT_KEY));
 const persistedWpm = parseInt(lsGet(LS_KEY.wpm, '300'), 10);
 if (!Number.isNaN(persistedWpm)) wpm = Math.max(50, Math.min(1500, persistedWpm));
 $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
+
+const persistedPreset = lsGet(LS_KEY.preset, 'standard');
+const presetMatch = PRESETS.findIndex(preset => preset.key === persistedPreset);
+if (presetMatch >= 0) {
+  presetIdx = presetMatch;
+}
+syncPresetUi();
 
 const persistedTheme = parseInt(lsGet(LS_KEY.theme, '0'), 10);
 if (!Number.isNaN(persistedTheme) && persistedTheme >= 0 && persistedTheme < themes.length) {
@@ -2690,6 +3122,9 @@ document.addEventListener('keydown', e => {
       break;
     case 'c':
       openChapterDialog();
+      break;
+    case 'p':
+      cyclePreset();
       break;
     case 'O':
       if (e.ctrlKey) { e.preventDefault(); stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }

@@ -1,4 +1,5 @@
 pub mod doc;
+pub mod preset;
 pub mod reader;
 pub mod text;
 pub mod theme;

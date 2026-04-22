@@ -1,25 +1,32 @@
 # speed-reader
 
-A tiny RSVP (Rapid Serial Visual Presentation) speed reader for markdown,
-running in the terminal. One word flashes at a time at a fixed cadence —
-your eyes stop saccading and reading speed becomes a function of
-recognition rather than scanning.
+A calm, private reading instrument for long-form text.
 
-Built with [ratatui](https://ratatui.rs) + [crossterm](https://github.com/crossterm-rs/crossterm),
-with inline images via [ratatui-image](https://github.com/benjajaja/ratatui-image).
-Targeted at [Ghostty](https://ghostty.org/) (or any terminal that speaks
-Kitty / Sixel graphics), but falls back to half-blocks on plainer terms.
+`speed-reader` presents one word at a time so you can stay with the sentence instead of scanning the page. It is built for focused reading of real documents, not hypey "10x faster" claims.
 
-## Features
+The app runs in the terminal today, with a web reader already taking shape through the shared Rust reading engine.
 
-- RSVP playback of markdown files (headings, paragraphs, code blocks)
-- Inline images — local paths and `http(s)://` URLs, rendered via the
-  terminal's native graphics protocol when available
-- Chapter / section picker (`c`) to jump directly into a document
-- Dark / light / **system** themes (auto-detects terminal background via OSC 11)
-- Fuzzy-ish file picker (`o`) to open another file without leaving the TUI
-- Adjustable WPM from 50 to 1500 (steps of 25, default 300)
-- Unicode-safe word segmentation — works for English, Vietnamese, etc.
+Built with [ratatui](https://ratatui.rs) + [crossterm](https://github.com/crossterm-rs/crossterm), with inline images via [ratatui-image](https://github.com/benjajaja/ratatui-image). It is targeted at [Ghostty](https://ghostty.org/) and other terminals with graphics support, but falls back gracefully on simpler terminals.
+
+## What It Does
+
+- Focused RSVP reading for markdown, plain text, `docx`, and `pdf`
+- Resume your place in each file automatically
+- Render inline images from local paths or `http(s)://` URLs
+- Jump by chapter or section when headings are available
+- Handle headings, paragraphs, and code blocks with different pacing
+- Support dark, light, and system themes
+- Work well with Unicode text, including Vietnamese and other multilingual content
+
+## Why It Exists
+
+Most reading software is built for scrolling, tab-switching, and distraction. `speed-reader` is built for concentration:
+
+- one word at a time
+- keyboard-first controls
+- local files
+- private by default
+- no account, no sync dependency, no feed-shaped UI
 
 ## Install
 
@@ -35,7 +42,7 @@ Installs the latest release to `~/.local/bin`. Options:
 # pin a version
 curl -fsSL .../install.sh | sh -s -- --version v0.1.0
 
-# custom prefix (binary → $PREFIX/bin)
+# custom prefix (binary -> $PREFIX/bin)
 curl -fsSL .../install.sh | PREFIX=/usr/local sh
 ```
 
@@ -56,33 +63,49 @@ make install         # builds release, installs to ~/.local/bin
 make run             # builds and opens sample.md
 ```
 
-Pre-built macOS binaries (x86_64 + aarch64) are attached to
-[GitHub Releases](../../releases) for tagged versions.
+Pre-built macOS binaries (x86_64 + aarch64) are attached to [GitHub Releases](../../releases) for tagged versions.
 
 ## Usage
 
 ```sh
-speed-reader [PATH] [--theme dark|light|system]
+speed-reader [PATH] [--theme dark|light|system] [--image-pause SECONDS]
 ```
+
+Supported inputs include `.md`, `.markdown`, `.mdx`, `.txt`, `.docx`, and `.pdf`.
 
 If no path is given, press `o` to open the file picker.
 
 ### Keys
 
-| Key              | Action                             |
-| ---------------- | ---------------------------------- |
-| `Space`          | play / pause                       |
-| `← →` / `h l`    | step one word                      |
-| `↑ ↓` / `+ -`    | WPM ± 25                           |
-| `o`              | open file picker                   |
-| `c`              | open chapter picker                |
-| `t`              | cycle theme (dark · light · system) |
-| `?`              | toggle help                        |
-| `q` / `Esc`      | quit                               |
+| Key | Action |
+| --- | --- |
+| `Space` | play / pause |
+| `← →` / `h l` | step one chunk |
+| `↑ ↓` / `+ -` | WPM ± 25 |
+| `o` | open file picker |
+| `1`..`5` | reopen recent file from home screen |
+| `c` | open chapter picker |
+| `p` | cycle reading preset |
+| `t` | cycle theme (dark · light · system) |
+| `?` | toggle help |
+| `q` / `Esc` | quit |
 
-In the pickers: `↑ ↓` move, `Enter` confirm, `Backspace` edit query,
-`Esc` cancel. The file picker uses `Enter` to open/descend. When an image block
-is reached, `Space` or `→` advances past it.
+In the pickers: `↑ ↓` move, `Enter` confirm, `Backspace` edit query, `Esc` cancel. The file picker uses `Enter` to open or descend.
+
+When an image block is reached, the reader waits for the configured image pause and then auto-advances.
+
+## Current Product Shape
+
+The terminal app already includes:
+
+- saved reading position per file
+- file picker for opening another document without leaving the UI
+- chapter and section picker for navigating longer documents
+- reading presets for gentle, standard, technical, and study pacing
+- time remaining estimates
+- section-aware status information while reading
+- per-block pacing differences for text, headings, code, paragraph breaks, and images
+- inline image loading with terminal graphics support when available
 
 ## Building
 
@@ -103,17 +126,18 @@ make dist            # builds all four targets and tarballs into dist/
 
 `make help` prints the full list.
 
-## Project layout
+## Project Layout
 
-```
+```text
 src/
   main.rs     entry point, CLI, terminal lifecycle
-  app.rs      app state, actions, file picker, image loading
-  doc.rs      markdown → blocks
-  reader.rs   blocks → RSVP chunks, pacing
-  input.rs    key → action mapping
+  app.rs      app state, persistence, file picker, image loading
+  doc.rs      markdown / text / docx / pdf -> blocks
+  reader.rs   blocks -> RSVP chunks, pacing, time estimates
+  input.rs    key -> action mapping
   ui.rs       ratatui rendering
   theme.rs    dark / light / system palettes
+  wasm.rs     shared web reader bindings
 ```
 
 ## License

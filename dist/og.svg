@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="bgA" cx="10%" cy="10%" r="60%">
+      <stop offset="0%"   stop-color="#b8451e" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#b8451e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bgB" cx="90%" cy="90%" r="60%">
+      <stop offset="0%"   stop-color="#c9c0ab" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#c9c0ab" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="paper" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 0.05 0"/>
+    </filter>
+  </defs>
+
+  <!-- Paper -->
+  <rect width="1200" height="630" fill="#fbfaf8"/>
+  <rect width="1200" height="630" fill="url(#bgA)"/>
+  <rect width="1200" height="630" fill="url(#bgB)"/>
+  <rect width="1200" height="630" filter="url(#paper)" opacity="0.35"/>
+
+  <!-- Hairline frame -->
+  <rect x="36" y="36" width="1128" height="558" fill="none" stroke="#e4dfd3" stroke-width="1"/>
+
+  <!-- ─── Illustration (left) ─── -->
+  <g transform="translate(80, 60) scale(0.78)">
+    <!-- Ground line -->
+    <path d="M 20 510 C 140 503, 360 517, 480 508" fill="none" stroke="#3a3632" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Canopy wash -->
+    <path d="M 360 155 C 298 124, 232 138, 230 200 C 192 188, 172 232, 214 262 C 194 296, 240 328, 294 306 C 328 336, 384 322, 394 280 C 436 272, 448 224, 412 200 C 434 158, 398 128, 360 155 Z"
+          fill="#1a1a1a" fill-opacity="0.06" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- Canopy leaves -->
+    <ellipse cx="268" cy="184" rx="4.5" ry="2" transform="rotate(30 268 184)" fill="#3a3632"/>
+    <ellipse cx="312" cy="158" rx="4.5" ry="2" transform="rotate(-22 312 158)" fill="#3a3632"/>
+    <ellipse cx="384" cy="202" rx="4.5" ry="2" transform="rotate(50 384 202)" fill="#3a3632"/>
+    <ellipse cx="258" cy="246" rx="4.5" ry="2" transform="rotate(10 258 246)" fill="#3a3632"/>
+    <ellipse cx="400" cy="248" rx="4.5" ry="2" transform="rotate(-40 400 248)" fill="#3a3632"/>
+
+    <!-- Trunk -->
+    <path d="M 384 510 C 372 440, 390 360, 374 290 C 364 238, 378 190, 362 152" fill="none" stroke="#1a1a1a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 372 282 Q 342 262, 314 274" fill="none" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 378 212 Q 398 198, 418 210" fill="none" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Falling leaves -->
+    <ellipse cx="198" cy="342" rx="3.2" ry="1.5" transform="rotate(45 198 342)" fill="#8a847d"/>
+    <ellipse cx="442" cy="372" rx="3.2" ry="1.5" transform="rotate(-25 442 372)" fill="#8a847d"/>
+    <ellipse cx="162" cy="418" rx="3.2" ry="1.5" transform="rotate(65 162 418)" fill="#8a847d"/>
+
+    <!-- Boy body -->
+    <path d="M 278 442 Q 290 398, 313 394 Q 336 390, 350 412 L 354 462 Q 344 478, 322 478 Q 288 478, 278 462 Z"
+          fill="#ffffff" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 304 404 Q 313 410, 322 404" fill="none" stroke="#3a3632" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Head -->
+    <circle cx="315" cy="382" r="17" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+    <path d="M 299 372 Q 310 360, 323 366 Q 332 365, 333 378 L 329 370 Q 320 372, 314 374 Q 306 374, 302 380 Z"
+          fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 309 385 q 2 1.5 4 0" fill="none" stroke="#3a3632" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M 318 385 q 2 1.5 4 0" fill="none" stroke="#3a3632" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- Legs -->
+    <path d="M 288 478 Q 258 492, 220 490" fill="none" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round"/>
+    <path d="M 306 478 Q 278 502, 234 502" fill="none" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round"/>
+
+    <!-- Arms -->
+    <path d="M 293 434 Q 282 447, 286 462" fill="none" stroke="#1a1a1a" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M 343 434 Q 351 447, 346 462" fill="none" stroke="#1a1a1a" stroke-width="4.5" stroke-linecap="round"/>
+
+    <!-- Open book -->
+    <path d="M 276 465 L 276 446 L 316 443 L 316 465 Z" fill="#ffffff" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 316 443 L 356 446 L 356 465 L 316 465 Z" fill="#ffffff" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 316 443 L 316 465" stroke="#1a1a1a" stroke-width="1.5"/>
+    <path d="M 283 451 L 312 449 M 283 455 L 312 453 M 283 459 L 312 457" stroke="#8a847d" stroke-width="1"/>
+    <path d="M 320 449 L 350 451 M 320 453 L 350 455 M 320 457 L 350 459" stroke="#8a847d" stroke-width="1"/>
+  </g>
+
+  <!-- ─── Text (right) ─── -->
+  <!-- Wordmark -->
+  <g transform="translate(560, 160)">
+    <line x1="0" y1="0" x2="40" y2="0" stroke="#c9c0ab" stroke-width="1"/>
+    <text x="54" y="5" font-family="'Instrument Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+          font-size="18" font-weight="500" letter-spacing="4.5" fill="#8a847d">SPEED READER</text>
+  </g>
+
+  <!-- Tagline -->
+  <text x="560" y="260" font-family="'Fraunces', 'Libre Baskerville', Palatino, Georgia, serif"
+        font-size="68" font-weight="400" fill="#1a1a1a" letter-spacing="-1.5">Quiet your mind.</text>
+  <text x="560" y="340" font-family="'Fraunces', 'Libre Baskerville', Palatino, Georgia, serif"
+        font-size="68" font-weight="500" font-style="italic" fill="#b8451e" letter-spacing="-1.5">Accelerate</text>
+  <text x="810" y="340" font-family="'Fraunces', 'Libre Baskerville', Palatino, Georgia, serif"
+        font-size="68" font-weight="400" fill="#1a1a1a" letter-spacing="-1.5">your story.</text>
+
+  <!-- Lede -->
+  <text x="560" y="412" font-family="'Fraunces', 'Libre Baskerville', Palatino, Georgia, serif"
+        font-size="24" font-weight="400" fill="#3a3632">An RSVP speed reader. One word at a time —</text>
+  <text x="560" y="448" font-family="'Fraunces', 'Libre Baskerville', Palatino, Georgia, serif"
+        font-size="24" font-weight="400" fill="#3a3632">the way ideas want to be absorbed.</text>
+
+  <!-- Footer rule + url -->
+  <line x1="560" y1="520" x2="1100" y2="520" stroke="#e4dfd3" stroke-width="1"/>
+  <text x="560" y="556" font-family="'Instrument Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="18" font-weight="500" letter-spacing="3" fill="#1a1a1a">TINYWINS.US</text>
+  <text x="560" y="582" font-family="'Fraunces', 'Libre Baskerville', Palatino, Georgia, serif"
+        font-size="16" font-style="italic" fill="#8a847d">Private by design · Your text never leaves the browser</text>
+</svg>

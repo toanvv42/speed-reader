@@ -22,7 +22,7 @@ use speed_reader::theme::{self, ThemeChoice};
 #[derive(Parser)]
 #[command(
     name = "speed-reader",
-    about = "RSVP speed reader for markdown, text, docx, and pdf files"
+    about = "A calm, local-first reading instrument for markdown, text, docx, and pdf files"
 )]
 struct Cli {
     /// Path to the file to open (.md/.markdown/.mdx/.txt/.docx/.pdf)

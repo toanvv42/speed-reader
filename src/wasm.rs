@@ -5,6 +5,7 @@ use serde::Deserialize;
 use crate::doc::{
     Block, SectionStart, blocks_from_plain_text, parse_docx, parse_markdown, sections_from_blocks,
 };
+use crate::preset::Preset;
 use crate::reader::{ChapterTarget, ChunkKind, Reader, chapter_targets};
 
 #[wasm_bindgen]
@@ -135,12 +136,64 @@ impl WebReader {
         self.inner.chunk_duration(wpm, pause).as_millis() as u32
     }
 
+    #[wasm_bindgen(js_name = chunkDurationWithPresetMs)]
+    pub fn chunk_duration_with_preset_ms(
+        &self,
+        wpm: u32,
+        preset: &str,
+        image_pause_ms: u32,
+    ) -> u32 {
+        let pause = std::time::Duration::from_millis(image_pause_ms as u64);
+        let base = self.inner.chunk_duration(wpm, pause);
+        let preset = preset.parse::<Preset>().unwrap_or(Preset::Standard);
+        let multiplier = self
+            .inner
+            .current()
+            .map(|chunk| preset.chunk_multiplier(chunk.kind))
+            .unwrap_or(1.0);
+        std::time::Duration::from_secs_f32((base.as_secs_f32() * multiplier).max(0.02))
+            .as_millis() as u32
+    }
+
     #[wasm_bindgen(js_name = remainingDurationMs)]
     pub fn remaining_duration_ms(&self, wpm: u32, image_pause_ms: u32) -> u32 {
         let pause = std::time::Duration::from_millis(image_pause_ms as u64);
         self.inner
             .remaining_duration_from(self.inner.index, wpm, pause)
             .as_millis() as u32
+    }
+
+    #[wasm_bindgen(js_name = remainingDurationWithPresetMs)]
+    pub fn remaining_duration_with_preset_ms(
+        &self,
+        wpm: u32,
+        preset: &str,
+        image_pause_ms: u32,
+    ) -> u32 {
+        let pause = std::time::Duration::from_millis(image_pause_ms as u64);
+        let preset = preset.parse::<Preset>().unwrap_or(Preset::Standard);
+        self.inner.chunks[self.inner.index..]
+            .iter()
+            .map(|chunk| {
+                let base = match chunk.kind {
+                    ChunkKind::Image => pause,
+                    ChunkKind::Code => self.inner.chunk_duration(wpm, pause),
+                    _ => {
+                        let base_ms = 60_000.0 / (wpm.max(1) as f32);
+                        std::time::Duration::from_millis((base_ms * chunk.multiplier).max(20.0) as u64)
+                    }
+                };
+                std::time::Duration::from_secs_f32(
+                    (base.as_secs_f32() * preset.chunk_multiplier(chunk.kind)).max(0.02),
+                )
+            })
+            .fold(std::time::Duration::ZERO, |acc, d| acc.saturating_add(d))
+            .as_millis() as u32
+    }
+
+    #[wasm_bindgen(js_name = presetDefaultWpm)]
+    pub fn preset_default_wpm(preset: &str) -> u32 {
+        preset.parse::<Preset>().unwrap_or(Preset::Standard).default_wpm()
     }
 
     #[wasm_bindgen(js_name = isPlaying)]
