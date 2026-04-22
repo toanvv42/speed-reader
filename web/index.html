@@ -1441,18 +1441,68 @@ dialog#chapter-dialog .dialog-sub {
 
 /* ─── Mobile (≤ 520px) ─── */
 @media (max-width: 520px) {
+  #input-overlay {
+    align-items: flex-start;
+    justify-content: stretch;
+    padding-top: max(0.4rem, env(safe-area-inset-top, 0px));
+  }
   /* Landing page */
-  .landing { padding: 1.5rem 1rem; gap: 1.5rem; }
+  .landing { padding: 1rem 0.82rem 1.25rem; gap: 0.9rem; }
   .landing::before { inset: 0.35rem; border-radius: 22px; }
-  .boy-tree { max-width: 180px; }
-  .hero-caption { font-size: 0.78rem; }
-  .lede { font-size: 0.95rem; }
-  .quick-points { font-size: 0.82rem; }
-  .value-grid,
-  .proof-strip { grid-template-columns: 1fr; }
-  .card { padding: 1rem; gap: 0.75rem; }
+  .hero-illustration { display: none; }
+  .hero-content { gap: 0.82rem; }
+  .eyebrow-row { gap: 0.45rem; }
+  .wordmark { font-size: 0.66rem; letter-spacing: 0.18em; }
+  .eyebrow-pill { font-size: 0.68rem; padding: 0.32rem 0.58rem; }
+  .tagline {
+    font-size: clamp(1.9rem, 8vw, 2.45rem);
+    max-width: 12ch;
+  }
+  .lede {
+    font-size: 0.92rem;
+    line-height: 1.42;
+    max-width: none;
+  }
+  .value-grid { display: none; }
+  .proof-strip {
+    display: none;
+  }
+  .card { padding: 1rem; gap: 0.8rem; border-radius: 18px; }
+  .card-kicker { gap: 0.3rem; }
+  .card-kicker span,
+  .card-kicker strong { width: 100%; }
+  .card-head { gap: 0.4rem; }
+  .card-label { font-size: 0.68rem; letter-spacing: 0.16em; }
   #md-input { height: 140px; font-size: 0.92rem; }
   .card-tabs { display: none; }
+  .card-actions { gap: 0.75rem; }
+  .action-cluster {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    min-height: 3.15rem;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 0.92rem;
+  }
+  .file-link {
+    width: 100%;
+    text-align: center;
+    padding: 0.45rem 0 0.1rem;
+    font-size: 0.92rem;
+  }
+  .preset-row { gap: 0.45rem; padding-top: 0.15rem; }
+  .preset-row-label { width: 100%; font-size: 0.68rem; }
+  .preset-chip {
+    min-height: 2.3rem;
+    padding: 0.5rem 0.78rem;
+    font-size: 0.8rem;
+  }
   #drop-hint { display: none; }
   .privacy-note { font-size: 0.7rem; }
   .meta { display: none; }
@@ -1579,7 +1629,27 @@ dialog#chapter-dialog .dialog-sub {
   }
 
   /* Help dialog */
-  dialog#help-dialog { padding: 1.25rem 1.2rem; max-width: calc(100vw - 1rem); }
+  dialog#help-dialog,
+  dialog#chapter-dialog {
+    width: calc(100vw - 0.8rem);
+    max-width: calc(100vw - 0.8rem);
+    margin: auto;
+    border-radius: 18px 18px 12px 12px;
+    padding: 1.15rem 1rem 1rem;
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--paper-deep) 80%, transparent),
+      var(--shadow-lg);
+  }
+  dialog#help-dialog h3,
+  dialog#chapter-dialog h3 {
+    font-size: 1.2rem;
+  }
+  dialog#help-dialog .dialog-sub,
+  dialog#chapter-dialog .dialog-sub {
+    font-size: 0.82rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
   dialog#help-dialog dl {
     grid-template-columns: minmax(6.5rem, max-content) minmax(0, 1fr);
     gap: 0.45rem 0.65rem;
@@ -1589,13 +1659,40 @@ dialog#chapter-dialog .dialog-sub {
   dialog#help-dialog .kbd-only { display: none; }
   dialog#help-dialog .touch-only { display: block; }
 
-  dialog#chapter-dialog {
-    padding: 1.15rem 1rem;
-    max-width: calc(100vw - 1rem);
+  #chapter-search {
+    min-height: 2.85rem;
+    font-size: 0.95rem;
   }
   #chapter-list {
-    max-height: min(56vh, 360px);
+    max-height: min(46vh, 340px);
+    gap: 0.4rem;
   }
+  #chapter-list button {
+    padding: 0.82rem 0.85rem;
+    border-radius: 11px;
+  }
+  dialog#help-dialog button.close,
+  dialog#chapter-dialog button.close {
+    width: 100%;
+    min-height: 2.9rem;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  #input-overlay {
+    padding-top: max(0.2rem, env(safe-area-inset-top, 0px));
+  }
+  .landing {
+    padding: 0.88rem 0.72rem 1.1rem;
+    gap: 0.72rem;
+  }
+  .tagline { font-size: clamp(1.72rem, 8.2vw, 2.15rem); }
+  .lede { font-size: 0.88rem; line-height: 1.38; }
+  .value-card { padding: 0.62rem 0.7rem; }
+  .value-card strong { font-size: 0.84rem; }
+  .card { padding: 0.88rem; }
+  #md-input { height: 116px; }
 }
 
 /* Touch hint (hidden on desktop, visible briefly on mobile) */
