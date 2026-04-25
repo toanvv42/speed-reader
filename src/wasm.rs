@@ -120,6 +120,7 @@ impl WebReader {
                 ChunkKind::Code => "code",
                 ChunkKind::Paragraph => "paragraph",
                 ChunkKind::Image => "image",
+                ChunkKind::Table => "table",
             })
             .unwrap_or("word")
             .to_string()
@@ -128,6 +129,12 @@ impl WebReader {
     #[wasm_bindgen(js_name = imageUrl)]
     pub fn image_url(&self) -> Option<String> {
         self.inner.current().and_then(|c| c.image_url.clone())
+    }
+
+    #[wasm_bindgen(js_name = tableData)]
+    pub fn table_data(&self) -> Result<JsValue, JsError> {
+        serde_wasm_bindgen::to_value(&self.inner.current().and_then(|c| c.table.clone()))
+            .map_err(|e| JsError::new(&format!("failed to serialize table: {e}")))
     }
 
     #[wasm_bindgen(js_name = chunkDurationMs)]
@@ -151,8 +158,8 @@ impl WebReader {
             .current()
             .map(|chunk| preset.chunk_multiplier(chunk.kind))
             .unwrap_or(1.0);
-        std::time::Duration::from_secs_f32((base.as_secs_f32() * multiplier).max(0.02))
-            .as_millis() as u32
+        std::time::Duration::from_secs_f32((base.as_secs_f32() * multiplier).max(0.02)).as_millis()
+            as u32
     }
 
     #[wasm_bindgen(js_name = remainingDurationMs)]
@@ -177,10 +184,12 @@ impl WebReader {
             .map(|chunk| {
                 let base = match chunk.kind {
                     ChunkKind::Image => pause,
-                    ChunkKind::Code => self.inner.chunk_duration(wpm, pause),
+                    ChunkKind::Code | ChunkKind::Table => self.inner.chunk_duration(wpm, pause),
                     _ => {
                         let base_ms = 60_000.0 / (wpm.max(1) as f32);
-                        std::time::Duration::from_millis((base_ms * chunk.multiplier).max(20.0) as u64)
+                        std::time::Duration::from_millis(
+                            (base_ms * chunk.multiplier).max(20.0) as u64
+                        )
                     }
                 };
                 std::time::Duration::from_secs_f32(
@@ -193,7 +202,10 @@ impl WebReader {
 
     #[wasm_bindgen(js_name = presetDefaultWpm)]
     pub fn preset_default_wpm(preset: &str) -> u32 {
-        preset.parse::<Preset>().unwrap_or(Preset::Standard).default_wpm()
+        preset
+            .parse::<Preset>()
+            .unwrap_or(Preset::Standard)
+            .default_wpm()
     }
 
     #[wasm_bindgen(js_name = isPlaying)]
