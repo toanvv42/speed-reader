@@ -96,13 +96,18 @@ pub fn load(path: &Path) -> Result<Document> {
     }
 }
 
-/// Splits plain text on blank lines into paragraph `Block::Text` entries
-/// after running it through `sanitize`.
+/// Splits plain text on blank lines into text blocks, preserving simple
+/// fixed-column tables when the extracted text still carries spacing.
 pub fn blocks_from_plain_text(src: &str) -> Vec<Block> {
-    let cleaned = sanitize(src);
     let mut blocks = Vec::new();
-    for para in cleaned.split("\n\n") {
-        let flat = para.replace('\n', " ");
+    for para in split_plain_paragraphs(src) {
+        if let Some(table) = table_from_plain_text(para) {
+            blocks.push(Block::Table(table));
+            continue;
+        }
+
+        let cleaned = sanitize(para);
+        let flat = cleaned.replace('\n', " ");
         let trimmed = flat.trim();
         if !trimmed.is_empty() {
             blocks.push(Block::Text(trimmed.to_string()));
@@ -270,6 +275,51 @@ pub fn parse_markdown(src: &str) -> Vec<Block> {
     }
     flush_paragraph(&mut blocks, &mut buf);
     blocks
+}
+
+fn split_plain_paragraphs(src: &str) -> Vec<&str> {
+    src.split("\n\n").collect()
+}
+
+fn table_from_plain_text(src: &str) -> Option<TableBlock> {
+    let lines: Vec<&str> = src
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect();
+    if lines.len() < 2 {
+        return None;
+    }
+
+    let rows: Vec<Vec<String>> = lines
+        .iter()
+        .filter_map(|line| split_table_like_line(line))
+        .collect();
+    if rows.len() != lines.len() {
+        return None;
+    }
+
+    let width = rows.first()?.len();
+    if width < 2 || rows.iter().any(|row| row.len() != width) {
+        return None;
+    }
+
+    let headers = rows.first()?.clone();
+    let body = rows.into_iter().skip(1).collect();
+    Some(TableBlock {
+        headers,
+        rows: body,
+    })
+}
+
+fn split_table_like_line(line: &str) -> Option<Vec<String>> {
+    let cells: Vec<String> = line
+        .split("  ")
+        .map(str::trim)
+        .filter(|cell| !cell.is_empty())
+        .map(sanitize)
+        .collect();
+    (cells.len() >= 2).then_some(cells)
 }
 
 pub fn sections_from_blocks(blocks: &[Block]) -> Vec<SectionStart> {
@@ -821,6 +871,23 @@ mod tests {
                 Block::Text("second para".into()),
                 Block::Text("third".into()),
             ]
+        );
+    }
+
+    #[test]
+    fn plain_text_fixed_columns_become_table_block() {
+        let blocks = blocks_from_plain_text(
+            "Criterion   Lito 1       Lito X1\nCamera      1/2-inch     1/1.3-inch\nVideo       4K           HDR",
+        );
+        assert_eq!(
+            blocks,
+            vec![Block::Table(TableBlock {
+                headers: vec!["Criterion".into(), "Lito 1".into(), "Lito X1".into()],
+                rows: vec![
+                    vec!["Camera".into(), "1/2-inch".into(), "1/1.3-inch".into()],
+                    vec!["Video".into(), "4K".into(), "HDR".into()],
+                ],
+            })]
         );
     }
 
