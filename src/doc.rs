@@ -101,17 +101,52 @@ pub fn load(path: &Path) -> Result<Document> {
 pub fn blocks_from_plain_text(src: &str) -> Vec<Block> {
     let mut blocks = Vec::new();
     for para in split_plain_paragraphs(src) {
-        if let Some(table) = table_from_plain_text(para) {
-            blocks.push(Block::Table(table));
-            continue;
+        let mut text_buf = String::new();
+        let mut table_rows: Vec<Vec<String>> = Vec::new();
+        let mut table_lines: Vec<String> = Vec::new();
+
+        for line in para.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                flush_plain_table_run(
+                    &mut blocks,
+                    &mut text_buf,
+                    &mut table_rows,
+                    &mut table_lines,
+                );
+                flush_plain_text_block(&mut blocks, &mut text_buf);
+                continue;
+            }
+
+            match split_table_like_line(trimmed) {
+                Some(row)
+                    if table_rows
+                        .first()
+                        .map(|first| first.len() == row.len())
+                        .unwrap_or(true) =>
+                {
+                    table_lines.push(trimmed.to_string());
+                    table_rows.push(row);
+                }
+                _ => {
+                    flush_plain_table_run(
+                        &mut blocks,
+                        &mut text_buf,
+                        &mut table_rows,
+                        &mut table_lines,
+                    );
+                    append_plain_text_line(&mut text_buf, trimmed);
+                }
+            }
         }
 
-        let cleaned = sanitize(para);
-        let flat = cleaned.replace('\n', " ");
-        let trimmed = flat.trim();
-        if !trimmed.is_empty() {
-            blocks.push(Block::Text(trimmed.to_string()));
-        }
+        flush_plain_table_run(
+            &mut blocks,
+            &mut text_buf,
+            &mut table_rows,
+            &mut table_lines,
+        );
+        flush_plain_text_block(&mut blocks, &mut text_buf);
     }
     blocks
 }
@@ -281,24 +316,7 @@ fn split_plain_paragraphs(src: &str) -> Vec<&str> {
     src.split("\n\n").collect()
 }
 
-fn table_from_plain_text(src: &str) -> Option<TableBlock> {
-    let lines: Vec<&str> = src
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty())
-        .collect();
-    if lines.len() < 2 {
-        return None;
-    }
-
-    let rows: Vec<Vec<String>> = lines
-        .iter()
-        .filter_map(|line| split_table_like_line(line))
-        .collect();
-    if rows.len() != lines.len() {
-        return None;
-    }
-
+fn table_from_rows(rows: Vec<Vec<String>>) -> Option<TableBlock> {
     let width = rows.first()?.len();
     if width < 2 || rows.iter().any(|row| row.len() != width) {
         return None;
@@ -310,6 +328,51 @@ fn table_from_plain_text(src: &str) -> Option<TableBlock> {
         headers,
         rows: body,
     })
+}
+
+fn flush_plain_table_run(
+    blocks: &mut Vec<Block>,
+    text_buf: &mut String,
+    table_rows: &mut Vec<Vec<String>>,
+    table_lines: &mut Vec<String>,
+) {
+    if table_rows.is_empty() {
+        return;
+    }
+
+    if table_rows.len() >= 2 {
+        if let Some(table) = table_from_rows(std::mem::take(table_rows)) {
+            flush_plain_text_block(blocks, text_buf);
+            blocks.push(Block::Table(table));
+        }
+    } else {
+        for line in table_lines.iter() {
+            append_plain_text_line(text_buf, line);
+        }
+        table_rows.clear();
+    }
+
+    table_lines.clear();
+}
+
+fn append_plain_text_line(text_buf: &mut String, line: &str) {
+    let cleaned = sanitize(line);
+    let trimmed = cleaned.trim();
+    if trimmed.is_empty() {
+        return;
+    }
+    if !text_buf.is_empty() {
+        text_buf.push(' ');
+    }
+    text_buf.push_str(trimmed);
+}
+
+fn flush_plain_text_block(blocks: &mut Vec<Block>, text_buf: &mut String) {
+    let cleaned = sanitize(text_buf.trim());
+    if !cleaned.is_empty() {
+        blocks.push(Block::Text(cleaned));
+    }
+    text_buf.clear();
 }
 
 fn split_table_like_line(line: &str) -> Option<Vec<String>> {
@@ -888,6 +951,27 @@ mod tests {
                     vec!["Video".into(), "4K".into(), "HDR".into()],
                 ],
             })]
+        );
+    }
+
+    #[test]
+    fn plain_text_table_run_can_live_inside_page_text() {
+        let blocks = blocks_from_plain_text(
+            "Intro paragraph before table.\nCriterion   Lito 1       Lito X1\nCamera      1/2-inch     1/1.3-inch\nVideo       4K           HDR\nClosing paragraph after table.",
+        );
+        assert_eq!(
+            blocks,
+            vec![
+                Block::Text("Intro paragraph before table.".into()),
+                Block::Table(TableBlock {
+                    headers: vec!["Criterion".into(), "Lito 1".into(), "Lito X1".into()],
+                    rows: vec![
+                        vec!["Camera".into(), "1/2-inch".into(), "1/1.3-inch".into()],
+                        vec!["Video".into(), "4K".into(), "HDR".into()],
+                    ],
+                }),
+                Block::Text("Closing paragraph after table.".into()),
+            ]
         );
     }
 
