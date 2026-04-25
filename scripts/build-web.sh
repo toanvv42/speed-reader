@@ -52,6 +52,11 @@ awk -v b64file="$WASM_B64_FILE" '
   echo 'await __wbg_init();'
   echo '// WebReader is already available from the glue above'
   echo ''
+  echo '// === Inlined app modules ==='
+  cat "$ROOT/web/src/storage.js"
+  echo ''
+  cat "$ROOT/web/src/pdf.js"
+  echo ''
 
   # App logic (after END_WASM_INLINE_MARKER to </script>)
   sed -n '/END_WASM_INLINE_MARKER/,/<\/script>/p' "$ROOT/web/index.html" \
