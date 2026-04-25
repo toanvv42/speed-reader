@@ -2122,12 +2122,47 @@ async function extractPdfData(arrayBuffer) {
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
-    pages.push(content.items.map(item => item.str).join(' '));
+    pages.push(textFromPdfItems(content.items));
   }
   return {
     text: pages.join('\n\n'),
     sections: remapPdfSectionsToBlockIndices(await extractPdfSections(doc, pages), pages),
   };
+}
+
+function textFromPdfItems(items) {
+  const lines = [];
+  for (const item of items || []) {
+    const text = (item.str || '').trim();
+    if (!text) continue;
+    const transform = item.transform || [];
+    const x = Number(transform[4] ?? 0);
+    const y = Number(transform[5] ?? 0);
+    let line = lines.find(candidate => Math.abs(candidate.y - y) <= 2);
+    if (!line) {
+      line = { y, items: [] };
+      lines.push(line);
+    }
+    line.items.push({ text, x, width: Number(item.width ?? 0) });
+  }
+
+  return lines
+    .sort((a, b) => b.y - a.y)
+    .map(line => {
+      let out = '';
+      let prevRight = null;
+      for (const item of line.items.sort((a, b) => a.x - b.x)) {
+        if (prevRight !== null) {
+          const gap = item.x - prevRight;
+          out += gap > 18 ? '    ' : ' ';
+        }
+        out += item.text;
+        prevRight = item.x + item.width;
+      }
+      return out.trimEnd();
+    })
+    .filter(Boolean)
+    .join('\n');
 }
 
 async function extractPdfSections(doc, pages) {
