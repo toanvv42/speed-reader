@@ -171,22 +171,22 @@ fn render_table_text(chunk: &Chunk) -> String {
 
     let mut out = String::new();
     for (row_index, row) in rows.iter().enumerate() {
-        for i in 0..width {
+        for (i, col_width) in col_widths.iter().enumerate().take(width) {
             if i > 0 {
                 out.push_str("  ");
             }
             let cell = row.get(i).map(String::as_str).unwrap_or("");
             out.push_str(cell);
-            let pad = col_widths[i].saturating_sub(cell.chars().count());
+            let pad = col_width.saturating_sub(cell.chars().count());
             out.push_str(&" ".repeat(pad));
         }
         if row_index == 0 && !table.headers.is_empty() {
             out.push('\n');
-            for i in 0..width {
+            for (i, col_width) in col_widths.iter().enumerate().take(width) {
                 if i > 0 {
                     out.push_str("  ");
                 }
-                out.push_str(&"-".repeat(col_widths[i].max(3)));
+                out.push_str(&"-".repeat((*col_width).max(3)));
             }
         }
         out.push('\n');
