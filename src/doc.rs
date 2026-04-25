@@ -20,6 +20,28 @@ pub enum Block {
     Heading(u8, String),
     Code(String),
     Image(String),
+    Table(TableBlock),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct TableBlock {
+    pub headers: Vec<String>,
+    pub rows: Vec<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TableSection {
+    Head,
+    Body,
+}
+
+struct TableParseState {
+    headers: Vec<String>,
+    rows: Vec<Vec<String>>,
+    section: TableSection,
+    row: Vec<String>,
+    cell: String,
+    in_cell: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -101,9 +123,74 @@ pub fn parse_markdown(src: &str) -> Vec<Block> {
     let mut in_code = false;
     let mut in_image = false;
     let mut code_buf = String::new();
+    let mut table: Option<TableParseState> = None;
 
     for ev in parser {
         match ev {
+            Event::Start(Tag::Table(_)) => {
+                flush_paragraph(&mut blocks, &mut buf);
+                table = Some(TableParseState {
+                    headers: Vec::new(),
+                    rows: Vec::new(),
+                    section: TableSection::Body,
+                    row: Vec::new(),
+                    cell: String::new(),
+                    in_cell: false,
+                });
+            }
+            Event::End(TagEnd::Table) => {
+                if let Some(table) = table.take()
+                    && (!table.headers.is_empty() || !table.rows.is_empty())
+                {
+                    blocks.push(Block::Table(TableBlock {
+                        headers: table.headers,
+                        rows: table.rows,
+                    }));
+                }
+            }
+            Event::Start(Tag::TableHead) => {
+                if let Some(table) = table.as_mut() {
+                    table.section = TableSection::Head;
+                }
+            }
+            Event::End(TagEnd::TableHead) => {
+                if let Some(table) = table.as_mut() {
+                    let row = std::mem::take(&mut table.row);
+                    if !row.is_empty() && table.headers.is_empty() {
+                        table.headers = row;
+                    }
+                    table.section = TableSection::Body;
+                }
+            }
+            Event::Start(Tag::TableRow) => {
+                if let Some(table) = table.as_mut() {
+                    table.row.clear();
+                }
+            }
+            Event::End(TagEnd::TableRow) => {
+                if let Some(table) = table.as_mut() {
+                    let row = std::mem::take(&mut table.row);
+                    if table.section == TableSection::Head && table.headers.is_empty() {
+                        table.headers = row;
+                        table.section = TableSection::Body;
+                    } else if row.iter().any(|cell| !cell.trim().is_empty()) {
+                        table.rows.push(row);
+                    }
+                }
+            }
+            Event::Start(Tag::TableCell) => {
+                if let Some(table) = table.as_mut() {
+                    table.cell.clear();
+                    table.in_cell = true;
+                }
+            }
+            Event::End(TagEnd::TableCell) => {
+                if let Some(table) = table.as_mut() {
+                    table.in_cell = false;
+                    table.row.push(sanitize(table.cell.trim()));
+                    table.cell.clear();
+                }
+            }
             Event::Start(Tag::Heading { level, .. }) => {
                 flush_paragraph(&mut blocks, &mut buf);
                 heading_level = Some(match level {
@@ -145,17 +232,31 @@ pub fn parse_markdown(src: &str) -> Vec<Block> {
                 in_image = false;
             }
             Event::Text(t) => {
-                if in_code {
+                if let Some(table) = table.as_mut()
+                    && table.in_cell
+                {
+                    table.cell.push_str(&t);
+                } else if in_code {
                     code_buf.push_str(&t);
                 } else if !in_image {
                     buf.push_str(&t);
                 }
             }
             Event::Code(t) if !in_image => {
-                buf.push_str(&t);
+                if let Some(table) = table.as_mut()
+                    && table.in_cell
+                {
+                    table.cell.push_str(&t);
+                } else {
+                    buf.push_str(&t);
+                }
             }
             Event::SoftBreak | Event::HardBreak => {
-                if in_code {
+                if let Some(table) = table.as_mut()
+                    && table.in_cell
+                {
+                    table.cell.push(' ');
+                } else if in_code {
                     code_buf.push('\n');
                 } else if !in_image {
                     buf.push(' ');
@@ -647,6 +748,26 @@ mod tests {
         assert_eq!(
             blocks,
             vec![Block::Image("https://example.com/a.png".into())]
+        );
+    }
+
+    #[test]
+    fn markdown_table_becomes_table_block() {
+        let md = "| Criterion | Lito 1 | Lito X1 |\n| --- | --- | --- |\n| Camera | 1/2-inch | 1/1.3-inch (better) |\n| Video | 4K | 4K + HDR + 10-bit |";
+        let blocks = parse_markdown(md);
+        assert_eq!(
+            blocks,
+            vec![Block::Table(TableBlock {
+                headers: vec!["Criterion".into(), "Lito 1".into(), "Lito X1".into()],
+                rows: vec![
+                    vec![
+                        "Camera".into(),
+                        "1/2-inch".into(),
+                        "1/1.3-inch (better)".into()
+                    ],
+                    vec!["Video".into(), "4K".into(), "4K + HDR + 10-bit".into()],
+                ],
+            })]
         );
     }
 

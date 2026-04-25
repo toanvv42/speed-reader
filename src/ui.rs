@@ -53,8 +53,11 @@ fn draw_reader(f: &mut Frame, app: &mut App, area: Rect, p: &Palette) {
 }
 
 fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
-    if matches!(app.reader.current().map(|c| c.kind), Some(ChunkKind::Code)) {
-        draw_code_body(f, app, body, p);
+    if matches!(
+        app.reader.current().map(|c| c.kind),
+        Some(ChunkKind::Code | ChunkKind::Table)
+    ) {
+        draw_block_body(f, app, body, p);
         return;
     }
 
@@ -73,12 +76,14 @@ fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
         let (prev, next) = app.surrounding_words();
         let context = Paragraph::new(Line::from(vec![
             Span::styled(
-                prev.map(|word| format!("… {} ", truncate_start(word, 16))).unwrap_or_default(),
+                prev.map(|word| format!("… {} ", truncate_start(word, 16)))
+                    .unwrap_or_default(),
                 Style::default().fg(p.dim),
             ),
             Span::styled("•", Style::default().fg(p.accent)),
             Span::styled(
-                next.map(|word| format!(" {} …", truncate_start(word, 16))).unwrap_or_default(),
+                next.map(|word| format!(" {} …", truncate_start(word, 16)))
+                    .unwrap_or_default(),
                 Style::default().fg(p.dim),
             ),
         ]))
@@ -99,7 +104,7 @@ fn draw_text_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
     }
 }
 
-fn draw_code_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
+fn draw_block_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
     let Some(chunk) = app.reader.current() else {
         return;
     };
@@ -114,11 +119,19 @@ fn draw_code_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
         ])
         .split(body);
 
+    let title = match chunk.kind {
+        ChunkKind::Table => " table ",
+        _ => " code ",
+    };
+    let body = match chunk.kind {
+        ChunkKind::Table => render_table_text(chunk),
+        _ => chunk.text.clone(),
+    };
     let code_rect = centered_rect(90, 80, outer[1]);
-    let code = Paragraph::new(chunk.text.clone())
+    let code = Paragraph::new(body)
         .block(
             Block::default()
-                .title(" code ")
+                .title(title)
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(p.accent))
                 .style(Style::default().bg(p.modal_bg).fg(p.fg)),
@@ -127,11 +140,58 @@ fn draw_code_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
     f.render_widget(code, code_rect);
 
     let hint = Paragraph::new(Line::from(Span::styled(
-        "full code block · Space pause · ← → to step",
+        "full block · Space pause · <- -> to step",
         Style::default().fg(p.dim),
     )))
     .alignment(Alignment::Center);
     f.render_widget(hint, outer[2]);
+}
+
+fn render_table_text(chunk: &Chunk) -> String {
+    let Some(table) = &chunk.table else {
+        return chunk.text.clone();
+    };
+
+    let mut rows = Vec::new();
+    if !table.headers.is_empty() {
+        rows.push(table.headers.clone());
+    }
+    rows.extend(table.rows.clone());
+    if rows.is_empty() {
+        return chunk.text.clone();
+    }
+
+    let width = rows.iter().map(Vec::len).max().unwrap_or(0);
+    let mut col_widths = vec![0usize; width];
+    for row in &rows {
+        for (i, cell) in row.iter().enumerate() {
+            col_widths[i] = col_widths[i].max(cell.chars().count());
+        }
+    }
+
+    let mut out = String::new();
+    for (row_index, row) in rows.iter().enumerate() {
+        for (i, col_width) in col_widths.iter().enumerate().take(width) {
+            if i > 0 {
+                out.push_str("  ");
+            }
+            let cell = row.get(i).map(String::as_str).unwrap_or("");
+            out.push_str(cell);
+            let pad = col_width.saturating_sub(cell.chars().count());
+            out.push_str(&" ".repeat(pad));
+        }
+        if row_index == 0 && !table.headers.is_empty() {
+            out.push('\n');
+            for (i, col_width) in col_widths.iter().enumerate().take(width) {
+                if i > 0 {
+                    out.push_str("  ");
+                }
+                out.push_str(&"-".repeat((*col_width).max(3)));
+            }
+        }
+        out.push('\n');
+    }
+    out
 }
 
 fn draw_empty_body(f: &mut Frame, app: &App, body: Rect, p: &Palette) {
@@ -319,7 +379,10 @@ fn render_status(app: &App, p: &Palette) -> Paragraph<'static> {
             play, file, preset, app.wpm, idx, total, section, section_progress, eta
         )
     } else {
-        format!(" {}  {}  {}  ⏱ {} left   [{}] ", play, file, preset, eta, msg)
+        format!(
+            " {}  {}  {}  ⏱ {} left   [{}] ",
+            play, file, preset, eta, msg
+        )
     };
     Paragraph::new(text).style(Style::default().fg(p.status_fg).bg(p.status_bg))
 }

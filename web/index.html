@@ -250,6 +250,48 @@ body.rsvp .rail { opacity: 0.55; }
   tab-size: 2;
 }
 
+#table-display {
+  display: none;
+  width: min(1120px, 92vw);
+  max-height: min(68vh, 900px);
+  overflow: auto;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper-raised) 94%, var(--paper-deep));
+  box-shadow: var(--shadow-md);
+}
+
+#table-display table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ui);
+  font-size: clamp(0.82rem, 0.8vw + 0.42rem, 1rem);
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+#table-display th,
+#table-display td {
+  padding: 0.72rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+  min-width: 9rem;
+}
+
+#table-display th {
+  position: sticky;
+  top: 0;
+  background: color-mix(in srgb, var(--paper-raised) 96%, var(--paper-deep));
+  font-weight: 720;
+  color: var(--ink);
+  z-index: 1;
+}
+
+#table-display tr:last-child td {
+  border-bottom: 0;
+}
+
 body.rsvp.code-mode #word {
   display: none;
 }
@@ -1745,6 +1787,7 @@ dialog#chapter-dialog .dialog-sub {
 <main id="reader">
   <div id="word"></div>
   <pre id="code-display"></pre>
+  <div id="table-display"></div>
   <div id="kind-hint"></div>
   <img id="image-display" alt="">
   <div id="image-caption"></div>
@@ -2289,6 +2332,7 @@ const DEFAULT_FONT_KEY = 'sfpro';
 
 const $word = document.getElementById('word');
 const $code = document.getElementById('code-display');
+const $table = document.getElementById('table-display');
 const $hint = document.getElementById('kind-hint');
 const $img = document.getElementById('image-display');
 const $imgCaption = document.getElementById('image-caption');
@@ -2723,6 +2767,8 @@ function render() {
     $word.textContent = '';
     $code.textContent = '';
     $code.style.display = 'none';
+    $table.innerHTML = '';
+    $table.style.display = 'none';
     $hint.textContent = '';
     $img.style.display = 'none';
     $imgCaption.style.display = 'none';
@@ -2744,6 +2790,8 @@ function render() {
     $word.textContent = '';
     $code.textContent = '';
     $code.style.display = 'none';
+    $table.innerHTML = '';
+    $table.style.display = 'none';
     $hint.textContent = '';
     document.body.classList.remove('code-mode');
     const filename = url.split('/').pop();
@@ -2761,17 +2809,31 @@ function render() {
       $word.textContent = '';
       $code.textContent = text;
       $code.style.display = 'block';
+      $table.innerHTML = '';
+      $table.style.display = 'none';
       $hint.textContent = 'code block';
+    } else if (kind === 'table') {
+      document.body.classList.add('code-mode');
+      $word.textContent = '';
+      $code.textContent = '';
+      $code.style.display = 'none';
+      $table.innerHTML = renderTable(reader.tableData());
+      $table.style.display = 'block';
+      $hint.textContent = 'table';
     } else if (kind === 'paragraph') {
       document.body.classList.remove('code-mode');
       $code.textContent = '';
       $code.style.display = 'none';
+      $table.innerHTML = '';
+      $table.style.display = 'none';
       $word.innerHTML = '<span class="pilcrow">¶</span>';
       $hint.textContent = '';
     } else {
       document.body.classList.remove('code-mode');
       $code.textContent = '';
       $code.style.display = 'none';
+      $table.innerHTML = '';
+      $table.style.display = 'none';
       const chars = [...text];
       const spans = chars.map((c, i) =>
         i === orp
@@ -2800,6 +2862,27 @@ function render() {
   $play.classList.toggle('playing', reader.isPlaying());
   $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
   syncPresetUi();
+}
+
+function renderTable(table) {
+  if (!table) return '';
+  const headers = Array.isArray(table.headers) ? table.headers : [];
+  const rows = Array.isArray(table.rows) ? table.rows : [];
+  const width = Math.max(headers.length, ...rows.map(row => Array.isArray(row) ? row.length : 0), 0);
+  if (!width) return '';
+
+  const renderCells = (cells, tag) => {
+    const safeCells = Array.isArray(cells) ? cells : [];
+    let html = '';
+    for (let i = 0; i < width; i++) {
+      html += `<${tag}>${esc(String(safeCells[i] ?? ''))}</${tag}>`;
+    }
+    return html;
+  };
+
+  const head = headers.length ? `<thead><tr>${renderCells(headers, 'th')}</tr></thead>` : '';
+  const bodyRows = rows.map(row => `<tr>${renderCells(row, 'td')}</tr>`).join('');
+  return `<table>${head}<tbody>${bodyRows}</tbody></table>`;
 }
 
 function esc(s) {

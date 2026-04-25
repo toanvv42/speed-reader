@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::doc::{Block, SectionStart};
+use crate::doc::{Block, SectionStart, TableBlock};
 use crate::text::truncate_end;
 
 pub struct Chunk {
@@ -11,6 +11,7 @@ pub struct Chunk {
     pub multiplier: f32,
     pub orp: usize,
     pub image_url: Option<String>,
+    pub table: Option<TableBlock>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -20,6 +21,7 @@ pub enum ChunkKind {
     Code,
     Paragraph,
     Image,
+    Table,
 }
 
 pub struct Reader {
@@ -76,7 +78,9 @@ impl Reader {
         if let Some(chunk) = self.current() {
             match chunk.kind {
                 ChunkKind::Image => return image_pause,
-                ChunkKind::Code => return code_pause_duration(chunk, image_pause),
+                ChunkKind::Code | ChunkKind::Table => {
+                    return block_pause_duration(chunk, image_pause);
+                }
                 _ => {}
             }
         }
@@ -99,7 +103,7 @@ impl Reader {
             .iter()
             .map(|chunk| match chunk.kind {
                 ChunkKind::Image => image_pause,
-                ChunkKind::Code => code_pause_duration(chunk, image_pause),
+                ChunkKind::Code | ChunkKind::Table => block_pause_duration(chunk, image_pause),
                 _ => {
                     let base_ms = 60_000.0 / (wpm.max(1) as f32);
                     Duration::from_millis((base_ms * chunk.multiplier).max(20.0) as u64)
@@ -136,6 +140,7 @@ fn tokenize_with_block_starts(blocks: &[Block]) -> (Vec<Chunk>, Vec<usize>) {
                 multiplier: 1.5,
                 orp: 0,
                 image_url: None,
+                table: None,
             });
         }
         match block {
@@ -147,6 +152,7 @@ fn tokenize_with_block_starts(blocks: &[Block]) -> (Vec<Chunk>, Vec<usize>) {
                 multiplier: 1.0,
                 orp: 0,
                 image_url: None,
+                table: None,
             }),
             Block::Image(url) => out.push(Chunk {
                 text: truncate_end(url, 60),
@@ -154,6 +160,15 @@ fn tokenize_with_block_starts(blocks: &[Block]) -> (Vec<Chunk>, Vec<usize>) {
                 multiplier: 3.0,
                 orp: 0,
                 image_url: Some(url.clone()),
+                table: None,
+            }),
+            Block::Table(table) => out.push(Chunk {
+                text: table_summary(table),
+                kind: ChunkKind::Table,
+                multiplier: 1.0,
+                orp: 0,
+                image_url: None,
+                table: Some(table.clone()),
             }),
         }
     }
@@ -175,8 +190,18 @@ fn tokenize_text(out: &mut Vec<Chunk>, text: &str, kind: ChunkKind, base_mult: f
             multiplier: mult,
             orp,
             image_url: None,
+            table: None,
         });
     }
+}
+
+fn table_summary(table: &TableBlock) -> String {
+    let columns = table
+        .headers
+        .len()
+        .max(table.rows.iter().map(Vec::len).max().unwrap_or(0));
+    let rows = table.rows.len() + usize::from(!table.headers.is_empty());
+    format!("table: {rows} rows x {columns} columns")
 }
 
 fn punctuation_multiplier(word: &str) -> f32 {
@@ -187,7 +212,16 @@ fn punctuation_multiplier(word: &str) -> f32 {
     }
 }
 
-fn code_pause_duration(chunk: &Chunk, image_pause: Duration) -> Duration {
+fn block_pause_duration(chunk: &Chunk, image_pause: Duration) -> Duration {
+    if chunk.kind == ChunkKind::Table
+        && let Some(table) = &chunk.table
+    {
+        let cells = table.headers.len() + table.rows.iter().map(Vec::len).sum::<usize>();
+        let baseline = image_pause.as_secs_f32().max(3.0);
+        let seconds = (baseline + (cells as f32 * 0.35)).clamp(baseline, 18.0);
+        return Duration::from_secs_f32(seconds);
+    }
+
     let lines = chunk.text.lines().count().max(1) as f32;
     let width = chunk
         .text
@@ -286,6 +320,18 @@ mod tests {
         assert_eq!(r.chunks.len(), 1);
         assert_eq!(r.chunks[0].kind, ChunkKind::Code);
         assert_eq!(r.chunks[0].text, "fn main() {\n    println!(\"hi\");\n}");
+    }
+
+    #[test]
+    fn table_blocks_are_single_chunks() {
+        let table = TableBlock {
+            headers: vec!["A".into(), "B".into()],
+            rows: vec![vec!["1".into(), "2".into()]],
+        };
+        let r = Reader::from_blocks(vec![Block::Table(table.clone())]);
+        assert_eq!(r.chunks.len(), 1);
+        assert_eq!(r.chunks[0].kind, ChunkKind::Table);
+        assert_eq!(r.chunks[0].table, Some(table));
     }
 
     #[test]

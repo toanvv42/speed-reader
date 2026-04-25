@@ -100,7 +100,11 @@ mod tests {
     use super::*;
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
     use ratatui_image::picker::Picker as ImagePicker;
-    use speed_reader::{doc::Block, reader::Reader, theme::{self, ThemeChoice}};
+    use speed_reader::{
+        doc::Block,
+        reader::Reader,
+        theme::{self, ThemeChoice},
+    };
     use std::time::Duration;
 
     #[test]

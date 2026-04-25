@@ -472,8 +472,7 @@ impl App {
                 if let Some(recent) = self.recent_files(i + 1).into_iter().nth(i) {
                     match self.open_path(&recent.path) {
                         Ok(()) => {
-                            self.status_msg =
-                                Some(format!("resumed: {}", recent.path.display()));
+                            self.status_msg = Some(format!("resumed: {}", recent.path.display()));
                         }
                         Err(e) => {
                             self.status_msg = Some(format!("open failed: {}", e));

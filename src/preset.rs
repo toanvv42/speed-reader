@@ -42,20 +42,20 @@ impl Preset {
         match self {
             Preset::Gentle => match kind {
                 ChunkKind::Heading => 1.15,
-                ChunkKind::Code => 1.15,
+                ChunkKind::Code | ChunkKind::Table => 1.15,
                 ChunkKind::Paragraph => 1.25,
                 _ => 1.08,
             },
             Preset::Standard => 1.0,
             Preset::Technical => match kind {
                 ChunkKind::Heading => 1.1,
-                ChunkKind::Code => 1.35,
+                ChunkKind::Code | ChunkKind::Table => 1.35,
                 ChunkKind::Paragraph => 1.2,
                 _ => 1.0,
             },
             Preset::Study => match kind {
                 ChunkKind::Heading => 1.2,
-                ChunkKind::Code => 1.25,
+                ChunkKind::Code | ChunkKind::Table => 1.25,
                 ChunkKind::Paragraph => 1.35,
                 _ => 1.12,
             },
