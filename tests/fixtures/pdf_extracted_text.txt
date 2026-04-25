@@ -1,0 +1,13 @@
+1. Overview
+
+This text approximates a PDF extraction where line breaks arrive from page geometry
+instead of author intent. The parser should still produce useful paragraphs.
+
+Metric      Value      Note
+Pages       12         extracted
+Tables      1          fixed width
+
+2. Details
+
+The second section contains enough prose to behave like a normal reading block.
+

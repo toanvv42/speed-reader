@@ -377,6 +377,11 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   border-color: var(--rule);
   color: var(--ink);
 }
+#status button.active {
+  background: var(--paper-deep);
+  border-color: var(--rule);
+  color: var(--accent);
+}
 #status button:focus-visible {
   outline: none;
   border-color: var(--accent);
@@ -643,7 +648,7 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   inset: 0;
   background: var(--paper);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 10;
   overflow-y: auto;
@@ -659,11 +664,13 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
 
 .landing {
   width: min(1180px, 100%);
+  min-height: 100dvh;
   padding: clamp(1.25rem, 3vw, 2.4rem) clamp(1.25rem, 4vw, 3rem);
   display: grid;
   grid-template-columns: 1fr;
   gap: clamp(1.2rem, 3vw, 2.6rem);
   align-items: center;
+  align-content: center;
   position: relative;
 }
 .landing > * {
@@ -1172,6 +1179,69 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   border-color: var(--ink);
 }
 
+.session-panel {
+  display: grid;
+  gap: 0.55rem;
+  border-top: 1px dashed var(--rule);
+  padding-top: 0.85rem;
+}
+.session-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.session-panel-head button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.session-panel-head button:hover {
+  color: var(--accent);
+}
+.session-list {
+  display: grid;
+  gap: 0.45rem;
+}
+.session-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--paper) 94%, var(--paper-deep));
+  color: var(--ink);
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  display: grid;
+  gap: 0.25rem;
+}
+.session-item:hover {
+  border-color: var(--accent-soft);
+}
+.session-title {
+  font-family: var(--serif);
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+.session-meta {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+}
+.session-item.unavailable {
+  cursor: default;
+  opacity: 0.68;
+}
+
 .proof-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1205,7 +1275,7 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
 
 @media (min-width: 880px) and (max-height: 940px) {
   .landing {
-    padding-block: 1rem;
+    padding-block: max(1rem, env(safe-area-inset-top, 0px)) 1rem;
     gap: 1.2rem;
   }
   .boy-tree { max-width: 250px; }
@@ -1283,7 +1353,8 @@ dialog#help-dialog dd {
   margin: 0;
 }
 dialog#help-dialog button.close,
-dialog#chapter-dialog button.close {
+dialog#chapter-dialog button.close,
+dialog#bookmarks-dialog button.close {
   margin-top: 1.5rem;
   background: var(--ink);
   border: 1px solid var(--ink);
@@ -1297,13 +1368,15 @@ dialog#chapter-dialog button.close {
   transition: background-color 180ms ease;
 }
 dialog#help-dialog button.close:hover,
-dialog#chapter-dialog button.close:hover {
+dialog#chapter-dialog button.close:hover,
+dialog#bookmarks-dialog button.close:hover {
   background: var(--ink-soft);
   border-color: var(--ink-soft);
 }
 
 /* ─────────── Chapter dialog ─────────── */
-dialog#chapter-dialog {
+dialog#chapter-dialog,
+dialog#bookmarks-dialog {
   background: var(--paper-raised);
   color: var(--ink);
   border: 1px solid var(--rule-strong);
@@ -1316,18 +1389,21 @@ dialog#chapter-dialog {
     var(--shadow-lg);
   font-family: var(--sans);
 }
-dialog#chapter-dialog::backdrop {
+dialog#chapter-dialog::backdrop,
+dialog#bookmarks-dialog::backdrop {
   background: rgba(26, 22, 18, 0.35);
   backdrop-filter: blur(3px);
 }
-dialog#chapter-dialog h3 {
+dialog#chapter-dialog h3,
+dialog#bookmarks-dialog h3 {
   font-family: var(--serif);
   font-style: italic;
   font-weight: 400;
   font-size: 1.4rem;
   margin-bottom: 0.25rem;
 }
-dialog#chapter-dialog .dialog-sub {
+dialog#chapter-dialog .dialog-sub,
+dialog#bookmarks-dialog .dialog-sub {
   font-family: var(--serif);
   font-size: 0.85rem;
   color: var(--ink-dim);
@@ -1409,9 +1485,69 @@ dialog#chapter-dialog .dialog-sub {
   font-family: var(--serif);
   font-style: italic;
 }
+#bookmark-list {
+  margin-top: 0.9rem;
+  max-height: min(46vh, 360px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.bookmark-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--paper);
+  padding: 0.72rem 0.8rem;
+}
+.bookmark-jump {
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 0.18rem;
+}
+.bookmark-title {
+  font-family: var(--serif);
+  font-size: 0.92rem;
+}
+.bookmark-meta {
+  font-family: var(--sans);
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+.bookmark-remove {
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--paper-raised);
+  color: var(--ink-dim);
+  cursor: pointer;
+  padding: 0.35rem 0.55rem;
+}
+.bookmark-remove:hover {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+}
+#bookmark-empty {
+  margin-top: 0.9rem;
+  padding: 1rem;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 9px;
+  color: var(--ink-dim);
+  font-family: var(--serif);
+  font-style: italic;
+}
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
+}
+.dialog-actions.top {
+  justify-content: flex-start;
 }
 
 /* ─────────── Responsive tweaks ─────────── */
@@ -1777,6 +1913,11 @@ dialog#chapter-dialog .dialog-sub {
       <path d="M4 5h.01M4 12h.01M4 19h.01"/>
     </svg>
   </button>
+  <button id="btn-bookmarks" title="Bookmarks (b)" aria-label="Open bookmarks">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 4h12v16l-6-3-6 3z"/>
+    </svg>
+  </button>
 
   <span class="font-picker">
     <button id="btn-font" title="Choose reading font (f)" aria-label="Choose reading font" aria-haspopup="true" aria-expanded="false">Aa</button>
@@ -1954,6 +2095,13 @@ dialog#chapter-dialog .dialog-sub {
           <button type="button" class="preset-chip" data-preset="technical">technical</button>
           <button type="button" class="preset-chip" data-preset="study">study</button>
         </div>
+        <div id="session-panel" class="session-panel" hidden>
+          <div class="session-panel-head">
+            <span>Recent sessions</span>
+            <button id="btn-clear-sessions" type="button">Clear unavailable</button>
+          </div>
+          <div id="session-list" class="session-list"></div>
+        </div>
         <p id="drop-hint">Drag &amp; drop a <kbd>.md</kbd> <kbd>.txt</kbd> <kbd>.docx</kbd> <kbd>.pdf</kbd> anywhere on this page.</p>
         <p id="load-error"></p>
         <span class="privacy-note" title="All parsing runs locally in your browser via WebAssembly.">
@@ -2004,6 +2152,7 @@ dialog#chapter-dialog .dialog-sub {
     <dt class="kbd-only"><kbd>Ctrl+O</kbd> / <kbd>o</kbd></dt><dd class="kbd-only">open a file or paste text</dd>
     <dt class="kbd-only"><kbd>p</kbd></dt><dd class="kbd-only">cycle reading presets and reset pace</dd>
     <dt class="kbd-only"><kbd>c</kbd></dt><dd class="kbd-only">open chapter picker when headings are available</dd>
+    <dt class="kbd-only"><kbd>b</kbd></dt><dd class="kbd-only">open bookmarks for this document</dd>
     <dt class="kbd-only"><kbd>f</kbd></dt><dd class="kbd-only">choose a reading font — saved to this browser</dd>
     <dt class="kbd-only"><kbd>w</kbd></dt><dd class="kbd-only">cycle ambience between off, rain, and snow</dd>
     <dt class="kbd-only"><kbd>t</kbd></dt><dd class="kbd-only">cycle through paper, ink, and system themes</dd>
@@ -2031,206 +2180,25 @@ dialog#chapter-dialog .dialog-sub {
   </div>
 </dialog>
 
+<dialog id="bookmarks-dialog">
+  <h3>Bookmarks</h3>
+  <p class="dialog-sub">Mark useful spots and jump back without leaving the reader.</p>
+  <div class="dialog-actions top">
+    <button id="btn-toggle-bookmark" class="close" type="button">Mark current spot</button>
+  </div>
+  <div id="bookmark-empty">No bookmarks yet for this document.</div>
+  <div id="bookmark-list" role="listbox" aria-label="Bookmarks"></div>
+  <div class="dialog-actions">
+    <button class="close" id="btn-close-bookmarks">Close</button>
+  </div>
+</dialog>
+
 <script type="module">
 import init, { WebReader } from './pkg/speed_reader.js';
+import { extractPdfData } from "./src/pdf.js";
+import { LS_KEY, getFileHash, getSavedLocation, listBookmarks, listSessions, lsGet, lsSet, removeBookmark, removeSession, saveLocation, toggleBookmark, upsertSession } from "./src/storage.js";
 await init();
 // END_WASM_INLINE_MARKER
-
-// ─── pdf.js for browser-side PDF text extraction ───
-let pdfjsLibPromise = null;
-
-async function getPdfJs() {
-  if (!pdfjsLibPromise) {
-    pdfjsLibPromise = import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.min.mjs')
-      .then(pdfjsLib => {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.worker.min.mjs';
-        return pdfjsLib;
-      });
-  }
-  return pdfjsLibPromise;
-}
-
-async function extractPdfData(arrayBuffer) {
-  const pdfjsLib = await getPdfJs();
-  const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pages = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(textFromPdfItems(content.items));
-  }
-  return {
-    text: pages.join('\n\n'),
-    sections: remapPdfSectionsToBlockIndices(await extractPdfSections(doc, pages), pages),
-  };
-}
-
-function textFromPdfItems(items) {
-  const lines = [];
-  for (const item of items || []) {
-    const text = (item.str || '').trim();
-    if (!text) continue;
-    const transform = item.transform || [];
-    const x = Number(transform[4] ?? 0);
-    const y = Number(transform[5] ?? 0);
-    let line = lines.find(candidate => Math.abs(candidate.y - y) <= 2);
-    if (!line) {
-      line = { y, items: [] };
-      lines.push(line);
-    }
-    line.items.push({ text, x, width: Number(item.width ?? 0) });
-  }
-
-  return lines
-    .sort((a, b) => b.y - a.y)
-    .map(line => {
-      let out = '';
-      let prevRight = null;
-      for (const item of line.items.sort((a, b) => a.x - b.x)) {
-        if (prevRight !== null) {
-          const gap = item.x - prevRight;
-          out += gap > 18 ? '    ' : ' ';
-        }
-        out += item.text;
-        prevRight = item.x + item.width;
-      }
-      return out.trimEnd();
-    })
-    .filter(Boolean)
-    .join('\n');
-}
-
-async function extractPdfSections(doc, pages) {
-  const outline = await doc.getOutline();
-  if (outline?.length) {
-    const sections = [];
-    await collectPdfOutlineSections(doc, outline, 1, sections);
-    const deduped = dedupePdfSections(sections, pages.length);
-    if (deduped.length) return deduped;
-  }
-  return inferPdfSectionsFromPages(pages);
-}
-
-async function collectPdfOutlineSections(doc, items, level, sections) {
-  for (const item of items || []) {
-    const title = (item.title || '').replace(/\s+/g, ' ').trim();
-    const pageIndex = await resolvePdfDestinationPage(doc, item.dest);
-    if (title && Number.isInteger(pageIndex) && pageIndex >= 0) {
-      sections.push({ title, level, page_index: pageIndex });
-    }
-    if (item.items?.length) {
-      await collectPdfOutlineSections(doc, item.items, level + 1, sections);
-    }
-  }
-}
-
-async function resolvePdfDestinationPage(doc, dest) {
-  let resolved = dest;
-  if (typeof resolved === 'string') {
-    resolved = await doc.getDestination(resolved);
-  }
-  if (!Array.isArray(resolved) || resolved.length === 0) return null;
-  const target = resolved[0];
-  if (Number.isInteger(target)) return target;
-  if (target && typeof target === 'object' && 'num' in target && 'gen' in target) {
-    return doc.getPageIndex(target);
-  }
-  return null;
-}
-
-function dedupePdfSections(sections, pageCount) {
-  const seen = new Set();
-  return sections.filter(section => {
-    if (!Number.isInteger(section.page_index)) return false;
-    if (section.page_index < 0 || section.page_index >= pageCount) return false;
-    const key = `${section.title}|${section.level}|${section.page_index}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function inferPdfSectionsFromPages(pages) {
-  return pages.flatMap((pageText, index) => {
-    const title = inferPdfSectionTitle(pageText);
-    return title ? [{ title, level: 1, page_index: index }] : [];
-  });
-}
-
-function inferPdfSectionTitle(pageText) {
-  const compact = pageText.replace(/\s+/g, ' ').trim();
-  if (!compact) return null;
-  const sample = compact.slice(0, 140);
-  for (const pattern of [
-    /\bchapter\s+\d+\b[^.!?]{0,90}/i,
-    /\bpart\s+[ivxlcdm]+\b[^.!?]{0,90}/i,
-    /\b\d+\.\s+[A-Z][^.!?]{0,90}/,
-  ]) {
-    const match = sample.match(pattern);
-    if (match) return match[0].trim();
-  }
-  return null;
-}
-
-function sanitizePdfText(text) {
-  let out = '';
-  let prevSpace = false;
-  for (const ch of text) {
-    switch (ch) {
-      case '\u200B':
-      case '\u200C':
-      case '\u200D':
-      case '\uFEFF':
-      case '\u00AD':
-      case '\u2060':
-      case '\u180E':
-      case '\u034F':
-      case '\r':
-        break;
-      case '\n':
-        prevSpace = false;
-        out += '\n';
-        break;
-      case '\t':
-      case ' ':
-        if (!prevSpace) {
-          out += ' ';
-          prevSpace = true;
-        }
-        break;
-      default:
-        if (/[\u0000-\u001F\u007F-\u009F]/.test(ch)) break;
-        prevSpace = false;
-        out += ch;
-        break;
-    }
-  }
-  return out;
-}
-
-function countBlocksFromPlainText(text) {
-  const cleaned = sanitizePdfText(text);
-  let count = 0;
-  for (const para of cleaned.split('\n\n')) {
-    const flat = para.replace(/\n/g, ' ');
-    if (flat.trim()) count += 1;
-  }
-  return count;
-}
-
-function remapPdfSectionsToBlockIndices(sections, pages) {
-  let blocksBeforePage = 0;
-  const pageBlockStarts = pages.map(pageText => {
-    const start = blocksBeforePage;
-    blocksBeforePage += countBlocksFromPlainText(pageText);
-    return start;
-  });
-  return sections.map(section => ({
-    title: section.title,
-    level: section.level,
-    block_index: pageBlockStarts[section.page_index] ?? blocksBeforePage,
-  }));
-}
 
 let reader = null;
 let chapters = [];
@@ -2281,11 +2249,6 @@ fn main() {
 
 Use chapter navigation, change the preset, and then drop one of your own files into the page.`;
 
-// ─── Persistence (everything stays on-device) ───
-const LS_KEY = { font: 'sr.font', wpm: 'sr.wpm', theme: 'sr.themeIdx', weather: 'sr.weatherIdx', preset: 'sr.preset' };
-const lsGet = (k, fallback) => { try { const v = localStorage.getItem(k); return v === null ? fallback : v; } catch { return fallback; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
-
 // ─── Reader fonts (curated for English + Tiếng Việt) ───
 const FONTS = [
   { key: 'fraunces',   name: 'Fraunces',               stack: "'Fraunces', Georgia, serif",                       group: 'Serif · English & Tiếng Việt', note: 'Expressive, literary' },
@@ -2321,6 +2284,13 @@ const $chapterCount = document.getElementById('chapter-count');
 const $chapterEmpty = document.getElementById('chapter-empty');
 const $chapterList = document.getElementById('chapter-list');
 const $chapterButton = document.getElementById('btn-chapters');
+const $bookmarksDialog = document.getElementById('bookmarks-dialog');
+const $bookmarkButton = document.getElementById('btn-bookmarks');
+const $bookmarkToggle = document.getElementById('btn-toggle-bookmark');
+const $bookmarkList = document.getElementById('bookmark-list');
+const $bookmarkEmpty = document.getElementById('bookmark-empty');
+const $sessionPanel = document.getElementById('session-panel');
+const $sessionList = document.getElementById('session-list');
 const $card = document.getElementById('input-box');
 const $loadError = document.getElementById('load-error');
 const $weatherCanvas = document.getElementById('weather-canvas');
@@ -2330,6 +2300,9 @@ const $weatherMenu = document.getElementById('weather-menu');
 const hasWeather = Boolean($weatherCanvas && weatherCtx && $weatherButton);
 
 let currentFileHash = null;
+let currentSource = null;
+let currentBookmarks = [];
+let lastPersistAt = 0;
 
 function currentPreset() {
   return PRESETS[presetIdx] || PRESETS[1];
@@ -2592,27 +2565,6 @@ if (hasWeather) {
   animateWeather();
 }
 
-async function getFileHash(data) {
-  if (!crypto.subtle) {
-    let hash = 0;
-    const bytes = new Uint8Array(data);
-    for (let i = 0; i < bytes.length; i++) {
-      hash = ((hash << 5) - hash) + bytes[i];
-      hash |= 0;
-    }
-    return 'fb-' + Math.abs(hash).toString(16);
-  }
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function saveLocation() {
-  if (reader && currentFileHash) {
-    lsSet(`sr.loc.${currentFileHash}`, reader.index());
-  }
-}
-
 function formatRemaining(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(totalSeconds / 60);
@@ -2661,6 +2613,140 @@ function syncChapterButton() {
   if (!hasChapters && $chapterDialog.open) {
     $chapterDialog.close();
   }
+}
+
+function persistReadingState({ force = false } = {}) {
+  if (!reader || !currentFileHash) return;
+  const now = Date.now();
+  if (!force && now - lastPersistAt < 4000) return;
+  lastPersistAt = now;
+  saveLocation(currentFileHash, reader.index());
+  persistCurrentSession();
+}
+
+function persistCurrentSession() {
+  if (!reader || !currentSource || !currentFileHash) return;
+  const source = { ...currentSource };
+  if (!source.persistText) {
+    delete source.text;
+  }
+  delete source.persistText;
+  upsertSession({
+    ...source,
+    hash: currentFileHash,
+    index: reader.index(),
+    total: reader.total(),
+    wpm,
+    preset: currentPreset().key,
+  });
+}
+
+function renderSessionHistory() {
+  const sessions = listSessions(6);
+  $sessionPanel.hidden = sessions.length === 0;
+  if (!sessions.length) {
+    $sessionList.innerHTML = '';
+    return;
+  }
+  $sessionList.innerHTML = sessions.map(session => {
+    const progress = session.total > 0
+      ? `${Math.min(100, Math.round(((session.index || 0) + 1) / session.total * 100))}%`
+      : 'saved';
+    const canResume = Boolean(session.text);
+    return `
+      <button class="session-item ${canResume ? '' : 'unavailable'}" type="button" data-session-hash="${esc(session.hash)}" ${canResume ? '' : 'disabled'}>
+        <span class="session-title">${esc(session.title)}</span>
+        <span class="session-meta">${esc(session.kind || 'text')} · ${progress} · ${canResume ? 'resume' : 'reopen file to continue'}</span>
+      </button>
+    `;
+  }).join('');
+  $sessionList.querySelectorAll('.session-item').forEach(button => {
+    button.addEventListener('click', () => resumeSession(button.dataset.sessionHash));
+  });
+}
+
+async function resumeSession(hash) {
+  const session = listSessions(12).find(item => item.hash === hash);
+  if (!session?.text) return;
+  const presetIndex = PRESETS.findIndex(preset => preset.key === session.preset);
+  if (presetIndex >= 0) applyPreset(presetIndex, { syncWpm: false });
+  if (Number.isFinite(session.wpm)) setWpm(session.wpm);
+  if (session.kind === 'text') {
+    await loadPlainText(session.text, { title: session.title, kind: 'text' });
+  } else {
+    await loadMarkdown(session.text, { title: session.title, kind: session.kind || 'markdown' });
+  }
+}
+
+function syncBookmarkButton() {
+  const marked = reader && currentFileHash && currentBookmarks.some(bookmark => bookmark.index === reader.index());
+  $bookmarkButton.classList.toggle('active', Boolean(marked));
+  $bookmarkButton.title = marked ? 'Bookmarked spot (b)' : 'Bookmarks (b)';
+}
+
+function bookmarkLabel(index) {
+  const chapterIndex = currentChapterSourceIndex();
+  const chapter = chapterIndex >= 0 ? chapters[chapterIndex].title : currentSource?.title || 'Document';
+  return `${chapter} · ${index + 1}/${reader?.total() || 0}`;
+}
+
+function renderBookmarks() {
+  currentBookmarks = listBookmarks(currentFileHash);
+  $bookmarkEmpty.hidden = currentBookmarks.length > 0;
+  $bookmarkList.innerHTML = currentBookmarks.map(bookmark => `
+    <div class="bookmark-item">
+      <button class="bookmark-jump" type="button" data-bookmark-index="${bookmark.index}">
+        <span class="bookmark-title">${esc(bookmark.label || `Spot ${bookmark.index + 1}`)}</span>
+        <span class="bookmark-meta">chunk ${bookmark.index + 1}</span>
+      </button>
+      <button class="bookmark-remove" type="button" data-bookmark-remove="${bookmark.index}">Remove</button>
+    </div>
+  `).join('');
+  $bookmarkList.querySelectorAll('.bookmark-jump').forEach(button => {
+    button.addEventListener('click', () => {
+      if (!reader) return;
+      reader.setIndex(Number(button.dataset.bookmarkIndex));
+      persistReadingState({ force: true });
+      closeBookmarksDialog();
+      enterRsvpMode();
+      render();
+    });
+  });
+  $bookmarkList.querySelectorAll('.bookmark-remove').forEach(button => {
+    button.addEventListener('click', () => {
+      removeBookmark(currentFileHash, Number(button.dataset.bookmarkRemove));
+      currentBookmarks = listBookmarks(currentFileHash);
+      renderBookmarks();
+      syncBookmarkButton();
+    });
+  });
+  $bookmarkToggle.textContent = reader && currentFileHash && currentBookmarks.some(bookmark => bookmark.index === reader.index())
+    ? 'Remove current mark'
+    : 'Mark current spot';
+}
+
+function openBookmarksDialog() {
+  if (!reader || !currentFileHash) return;
+  stopTimer();
+  reader.setPlaying(false);
+  render();
+  renderBookmarks();
+  $bookmarksDialog.showModal();
+}
+
+function closeBookmarksDialog() {
+  if ($bookmarksDialog.open) $bookmarksDialog.close();
+}
+
+function toggleCurrentBookmark() {
+  if (!reader || !currentFileHash) return;
+  toggleBookmark(currentFileHash, {
+    index: reader.index(),
+    label: bookmarkLabel(reader.index()),
+  });
+  currentBookmarks = listBookmarks(currentFileHash);
+  renderBookmarks();
+  syncBookmarkButton();
 }
 
 function renderChapterList() {
@@ -2725,6 +2811,7 @@ function jumpToFilteredChapter(filteredIndex) {
   if (!chapter || !reader) return;
   chapterSelection = filteredIndex;
   reader.setIndex(chapter.chunk_index);
+  persistReadingState({ force: true });
   closeChapterDialog();
   enterRsvpMode();
   render();
@@ -2746,10 +2833,9 @@ function render() {
     $progress.innerHTML = '0<em>/</em>0';
     $progressBar.style.width = '0%';
     syncPresetUi();
+    syncBookmarkButton();
     return;
   }
-
-  saveLocation();
 
   const kind = reader.kind();
   const text = reader.text();
@@ -2832,6 +2918,7 @@ function render() {
   $play.classList.toggle('playing', reader.isPlaying());
   $wpmDisplay.innerHTML = `${wpm}<em>wpm</em>`;
   syncPresetUi();
+  syncBookmarkButton();
 }
 
 function renderTable(table) {
@@ -2874,6 +2961,7 @@ function tick() {
     return;
   }
   reader.advance();
+  persistReadingState();
   render();
   scheduleNext();
 }
@@ -2885,6 +2973,7 @@ function stopTimer() {
 function togglePlay() {
   if (!reader || reader.total() === 0) return;
   reader.togglePlay();
+  if (!reader.isPlaying()) persistReadingState({ force: true });
   render();
   if (reader.isPlaying()) scheduleNext();
   else stopTimer();
@@ -2905,8 +2994,11 @@ function enterRsvpMode() {
 
 function exitRsvpMode() {
   closeChapterDialog();
+  closeBookmarksDialog();
+  persistReadingState({ force: true });
   document.body.classList.remove('rsvp');
   $overlay.classList.remove('hidden');
+  renderSessionHistory();
   $mdInput.focus();
 }
 
@@ -2915,10 +3007,13 @@ function setReader(newReader, nextChapters = []) {
   if (reader) reader.free();
   reader = newReader;
   chapters = normalizeChapters(nextChapters);
+  currentBookmarks = listBookmarks(currentFileHash);
+  lastPersistAt = 0;
   syncChapterButton();
   $loadError.style.display = 'none';
   enterRsvpMode();
   render();
+  persistReadingState({ force: true });
   // Auto-start after the cinematic entrance settles.
   setTimeout(() => {
     if (reader && reader.total() > 0 && !reader.isPlaying()) {
@@ -2934,20 +3029,41 @@ function showLoadError(msg) {
   $loadError.style.display = 'block';
 }
 
-async function loadMarkdown(md) {
+async function loadMarkdown(md, source = {}) {
   const encoder = new TextEncoder();
   currentFileHash = await getFileHash(encoder.encode(md));
-  const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+  currentSource = {
+    title: source.title || firstMarkdownTitle(md) || 'Pasted markdown',
+    kind: source.kind || 'markdown',
+    text: md,
+    persistText: source.persistText ?? true,
+  };
+  const lastIdx = getSavedLocation(currentFileHash);
   const webReader = new WebReader(md, lastIdx);
   setReader(webReader, webReader.chapters());
 }
 
-async function loadPlainText(text) {
+async function loadPlainText(text, source = {}) {
   const encoder = new TextEncoder();
   currentFileHash = await getFileHash(encoder.encode(text));
-  const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+  currentSource = {
+    title: source.title || firstTextTitle(text) || 'Pasted text',
+    kind: source.kind || 'text',
+    text,
+    persistText: source.persistText ?? true,
+  };
+  const lastIdx = getSavedLocation(currentFileHash);
   const webReader = WebReader.fromText(text, lastIdx);
   setReader(webReader, webReader.chapters());
+}
+
+function firstMarkdownTitle(text) {
+  const heading = text.split('\n').find(line => /^#{1,3}\s+\S/.test(line.trim()));
+  return heading ? heading.replace(/^#+\s+/, '').trim() : firstTextTitle(text);
+}
+
+function firstTextTitle(text) {
+  return text.split(/\n+/).map(line => line.trim()).find(Boolean)?.slice(0, 80);
 }
 
 async function loadFile(file) {
@@ -2956,30 +3072,32 @@ async function loadFile(file) {
     if (name.endsWith('.md') || name.endsWith('.markdown') || name.endsWith('.mdx')) {
       const text = await file.text();
       $mdInput.value = text;
-      await loadMarkdown(text);
+      await loadMarkdown(text, { title: file.name, kind: 'markdown', persistText: false });
     } else if (name.endsWith('.txt')) {
       const text = await file.text();
       $mdInput.value = text;
-      await loadPlainText(text);
+      await loadPlainText(text, { title: file.name, kind: 'text', persistText: false });
     } else if (name.endsWith('.docx')) {
       const buf = await file.arrayBuffer();
       currentFileHash = await getFileHash(new Uint8Array(buf));
-      const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+      currentSource = { title: file.name, kind: 'docx', persistText: false };
+      const lastIdx = getSavedLocation(currentFileHash);
       const webReader = WebReader.fromDocx(new Uint8Array(buf), lastIdx);
       setReader(webReader, webReader.chapters());
     } else if (name.endsWith('.pdf')) {
       const buf = await file.arrayBuffer();
       currentFileHash = await getFileHash(new Uint8Array(buf));
+      currentSource = { title: file.name, kind: 'pdf', persistText: false };
       const { text, sections } = await extractPdfData(buf);
       $mdInput.value = text;
       // For PDF, we hash the source bytes to identify it, but use the extracted text.
-      const lastIdx = parseInt(lsGet(`sr.loc.${currentFileHash}`, '0'), 10);
+      const lastIdx = getSavedLocation(currentFileHash);
       const webReader = WebReader.fromTextWithSections(text, sections, lastIdx);
       setReader(webReader, webReader.chapters());
     } else {
       const text = await file.text();
       $mdInput.value = text;
-      await loadPlainText(text);
+      await loadPlainText(text, { title: file.name, kind: 'text', persistText: false });
     }
   } catch (err) {
     console.error(err);
@@ -2995,6 +3113,7 @@ document.getElementById('btn-next').addEventListener('click', () => {
   reader.setPlaying(false);
   stopTimer();
   reader.advance();
+  persistReadingState({ force: true });
   render();
 });
 
@@ -3003,6 +3122,7 @@ document.getElementById('btn-prev').addEventListener('click', () => {
   reader.setPlaying(false);
   stopTimer();
   reader.retreat();
+  persistReadingState({ force: true });
   render();
 });
 
@@ -3018,19 +3138,27 @@ document.getElementById('btn-wpm-down').addEventListener('click', () => setWpm(w
 document.getElementById('btn-open').addEventListener('click', () => {
   stopTimer();
   if (reader) reader.setPlaying(false);
+  persistReadingState({ force: true });
   exitRsvpMode();
 });
 document.getElementById('btn-chapters').addEventListener('click', openChapterDialog);
+$bookmarkButton.addEventListener('click', openBookmarksDialog);
+$bookmarkToggle.addEventListener('click', toggleCurrentBookmark);
+document.getElementById('btn-close-bookmarks').addEventListener('click', closeBookmarksDialog);
+document.getElementById('btn-clear-sessions').addEventListener('click', () => {
+  listSessions(12).filter(session => !session.text).forEach(session => removeSession(session.hash));
+  renderSessionHistory();
+});
 
 document.getElementById('btn-load').addEventListener('click', () => {
   const md = $mdInput.value.trim();
   if (md) loadMarkdown(md);
-  else loadMarkdown(WEB_SAMPLE_TEXT);
+  else loadMarkdown(WEB_SAMPLE_TEXT, { title: 'Built-in sample', kind: 'sample' });
 });
 
 document.getElementById('btn-sample').addEventListener('click', () => {
   $mdInput.value = WEB_SAMPLE_TEXT;
-  loadMarkdown(WEB_SAMPLE_TEXT);
+  loadMarkdown(WEB_SAMPLE_TEXT, { title: 'Built-in sample', kind: 'sample' });
 });
 
 $presetButton.addEventListener('click', cyclePreset);
@@ -3147,6 +3275,7 @@ document.addEventListener('click', (e) => {
 buildFontMenu();
 buildWeatherMenu();
 applyFont(lsGet(LS_KEY.font, DEFAULT_FONT_KEY));
+renderSessionHistory();
 
 const persistedWpm = parseInt(lsGet(LS_KEY.wpm, '300'), 10);
 if (!Number.isNaN(persistedWpm)) wpm = Math.max(50, Math.min(1500, persistedWpm));
@@ -3209,6 +3338,13 @@ document.addEventListener('drop', async e => {
 
 // --- Keyboard shortcuts ---
 document.addEventListener('keydown', e => {
+  if ($bookmarksDialog.open) {
+    if (e.key === 'Escape' || e.key === 'b') {
+      e.preventDefault();
+      closeBookmarksDialog();
+    }
+    return;
+  }
   if ($chapterDialog.open) {
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -3253,10 +3389,10 @@ document.addEventListener('keydown', e => {
       togglePlay();
       break;
     case 'ArrowRight': case 'l':
-      if (reader) { reader.setPlaying(false); stopTimer(); reader.advance(); render(); }
+      if (reader) { reader.setPlaying(false); stopTimer(); reader.advance(); persistReadingState({ force: true }); render(); }
       break;
     case 'ArrowLeft': case 'h':
-      if (reader) { reader.setPlaying(false); stopTimer(); reader.retreat(); render(); }
+      if (reader) { reader.setPlaying(false); stopTimer(); reader.retreat(); persistReadingState({ force: true }); render(); }
       break;
     case 'ArrowUp': case '+': case '=':
       setWpm(wpm + 25);
@@ -3268,16 +3404,19 @@ document.addEventListener('keydown', e => {
       toggleFontMenu();
       break;
     case 'o':
-      if (!e.ctrlKey) { stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }
+      if (!e.ctrlKey) { stopTimer(); if (reader) reader.setPlaying(false); persistReadingState({ force: true }); exitRsvpMode(); }
       break;
     case 'c':
       openChapterDialog();
+      break;
+    case 'b':
+      openBookmarksDialog();
       break;
     case 'p':
       cyclePreset();
       break;
     case 'O':
-      if (e.ctrlKey) { e.preventDefault(); stopTimer(); if (reader) reader.setPlaying(false); exitRsvpMode(); }
+      if (e.ctrlKey) { e.preventDefault(); stopTimer(); if (reader) reader.setPlaying(false); persistReadingState({ force: true }); exitRsvpMode(); }
       break;
     case 't':
       cycleTheme();
@@ -3295,6 +3434,7 @@ document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'o') {
     e.preventDefault();
     stopTimer(); if (reader) reader.setPlaying(false);
+    persistReadingState({ force: true });
     exitRsvpMode();
   }
 });
@@ -3320,6 +3460,7 @@ document.addEventListener('keydown', e => {
     if (absDx > 40 && absDx > absDy * 1.5 && dt < 400) {
       reader.setPlaying(false); stopTimer();
       if (dx > 0) reader.retreat(); else reader.advance();
+      persistReadingState({ force: true });
       render();
     } else if (absDx < 15 && absDy < 15 && dt < 300) {
       togglePlay();
@@ -3340,6 +3481,7 @@ $progressBar.addEventListener('pointerdown', e => {
   const w = window.innerWidth;
   const pct = Math.max(0, Math.min(1, x / w));
   reader.setIndex(Math.round(pct * (total - 1)));
+  persistReadingState();
   render();
 });
 document.addEventListener('pointermove', e => {
@@ -3349,13 +3491,19 @@ document.addEventListener('pointermove', e => {
   const w = window.innerWidth;
   const pct = Math.max(0, Math.min(1, x / w));
   reader.setIndex(Math.round(pct * (total - 1)));
+  persistReadingState();
   render();
 });
 document.addEventListener('pointerup', e => {
   if (isDraggingProgress) {
     isDraggingProgress = false;
+    persistReadingState({ force: true });
     $progressBar.releasePointerCapture(e.pointerId);
   }
+});
+
+window.addEventListener('beforeunload', () => {
+  persistReadingState({ force: true });
 });
 
 // --- URL param: ?src= ---
