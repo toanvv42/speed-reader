@@ -3533,8 +3533,13 @@ if (srcParam) {
 
 // --- Extension local session: ?sessionId= ---
 function extensionStorageGet(storage, key) {
-  const result = storage.get(key);
-  if (result && typeof result.then === 'function') return result;
+  try {
+    const result = storage.get(key);
+    if (result && typeof result.then === 'function') return result;
+  } catch {
+    // Fall through to callback-style APIs.
+  }
+
   return new Promise((resolve, reject) => {
     try {
       storage.get(key, value => {
@@ -3549,8 +3554,13 @@ function extensionStorageGet(storage, key) {
 }
 
 function extensionStorageRemove(storage, key) {
-  const result = storage.remove(key);
-  if (result && typeof result.then === 'function') return result;
+  try {
+    const result = storage.remove(key);
+    if (result && typeof result.then === 'function') return result;
+  } catch {
+    // Fall through to callback-style APIs.
+  }
+
   return new Promise((resolve, reject) => {
     try {
       storage.remove(key, () => {
@@ -3570,16 +3580,20 @@ async function loadExtensionSession() {
   if (!sessionId || !extensionStorage) return;
   document.body.classList.add('extension-session');
 
-  const storage = extensionStorage.session || extensionStorage.local;
   const key = `speedReaderSession:${sessionId}`;
-  const result = await extensionStorageGet(storage, key);
-  const session = result[key];
+  const storages = [extensionStorage.session, extensionStorage.local].filter(Boolean);
+  let session = null;
+  for (const storage of storages) {
+    const result = await extensionStorageGet(storage, key).catch(() => null);
+    session = result?.[key];
+    if (session?.markdown) break;
+  }
   if (!session?.markdown) {
     showLoadError('This speed reader session has expired or could not be found.');
     return;
   }
 
-  await extensionStorageRemove(storage, key).catch(() => {});
+  await Promise.all(storages.map(storage => extensionStorageRemove(storage, key).catch(() => {})));
   await loadMarkdown(session.markdown, {
     title: session.title || 'Web page',
     kind: session.selected ? 'selection' : 'web page',

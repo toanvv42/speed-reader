@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Tinywins Speed Reader",
+  "version": "0.1.0",
+  "description": "Open the current page in a private, focused speed reader.",
+  "homepage_url": "https://tinywins.us/",
+  "action": {
+    "default_title": "Open in Tinywins Speed Reader"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["activeTab", "storage", "scripting"],
+  "commands": {
+    "open_reader": {
+      "suggested_key": {
+        "default": "Alt+Shift+S",
+        "mac": "Alt+Shift+S"
+      },
+      "description": "Open current page in Tinywins Speed Reader"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

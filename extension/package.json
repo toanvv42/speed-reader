@@ -1,0 +1,12 @@
+{
+  "name": "tinywins-speed-reader-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:reader": "node scripts/build-reader.mjs",
+    "package": "node scripts/package.mjs",
+    "test": "node --test"
+  }
+}
