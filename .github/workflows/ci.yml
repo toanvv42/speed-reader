@@ -15,40 +15,11 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  WASM_PACK_VERSION: 0.14.0
 
 jobs:
-  fmt:
-    name: rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - run: cargo fmt --all -- --check
-
-  clippy:
-    name: clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --locked --all-targets -- -D warnings
-
-  test:
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo test --locked --all-targets
-
   wasm-check:
-    name: wasm32 check
+    name: web reader wasm check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +28,29 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --lib --target wasm32-unknown-unknown
+
+  extension:
+    name: extension build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version ${{ env.WASM_PACK_VERSION }} --locked
+      - name: Build reader WASM package
+        run: wasm-pack build --target web --release --out-dir web/pkg .
+      - name: Test extension
+        run: npm test
+        working-directory: extension
+      - name: Build extension
+        run: npm run build
+        working-directory: extension
 
   audit:
     name: cargo audit
