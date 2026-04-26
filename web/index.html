@@ -3136,6 +3136,14 @@ document.getElementById('btn-wpm-up').addEventListener('click', () => setWpm(wpm
 document.getElementById('btn-wpm-down').addEventListener('click', () => setWpm(wpm - 25));
 
 document.getElementById('btn-open').addEventListener('click', () => {
+  const returnUrl = pageParams.get('returnUrl');
+  if (returnUrl) {
+    stopTimer();
+    if (reader) reader.setPlaying(false);
+    persistReadingState({ force: true });
+    window.location.href = returnUrl;
+    return;
+  }
   stopTimer();
   if (reader) reader.setPlaying(false);
   persistReadingState({ force: true });
@@ -3507,13 +3515,74 @@ window.addEventListener('beforeunload', () => {
 });
 
 // --- URL param: ?src= ---
-const srcParam = new URLSearchParams(location.search).get('src');
+const pageParams = new URLSearchParams(location.search);
+const srcParam = pageParams.get('src');
 if (srcParam) {
   fetch(srcParam)
     .then(r => r.text())
     .then(async md => await loadMarkdown(md))
     .catch(err => console.error('Failed to fetch ?src=', err));
 }
+
+// --- Extension local session: ?sessionId= ---
+function extensionStorageGet(storage, key) {
+  const result = storage.get(key);
+  if (result && typeof result.then === 'function') return result;
+  return new Promise((resolve, reject) => {
+    try {
+      storage.get(key, value => {
+        const err = globalThis.chrome?.runtime?.lastError;
+        if (err) reject(new Error(err.message));
+        else resolve(value);
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+function extensionStorageRemove(storage, key) {
+  const result = storage.remove(key);
+  if (result && typeof result.then === 'function') return result;
+  return new Promise((resolve, reject) => {
+    try {
+      storage.remove(key, () => {
+        const err = globalThis.chrome?.runtime?.lastError;
+        if (err) reject(new Error(err.message));
+        else resolve();
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+async function loadExtensionSession() {
+  const sessionId = pageParams.get('sessionId');
+  const extensionStorage = globalThis.browser?.storage || globalThis.chrome?.storage;
+  if (!sessionId || !extensionStorage) return;
+
+  const storage = extensionStorage.session || extensionStorage.local;
+  const key = `speedReaderSession:${sessionId}`;
+  const result = await extensionStorageGet(storage, key);
+  const session = result[key];
+  if (!session?.markdown) {
+    showLoadError('This speed reader session has expired or could not be found.');
+    return;
+  }
+
+  await extensionStorageRemove(storage, key).catch(() => {});
+  await loadMarkdown(session.markdown, {
+    title: session.title || 'Web page',
+    kind: session.selected ? 'selection' : 'web page',
+    persistText: true,
+  });
+}
+
+loadExtensionSession().catch(err => {
+  console.error('Failed to load extension session:', err);
+  showLoadError(err.message || 'Failed to load extension session.');
+});
 </script>
 </body>
 </html>
