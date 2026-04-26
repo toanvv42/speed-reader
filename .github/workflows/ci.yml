@@ -41,10 +41,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
       - name: Install wasm-pack
         run: cargo install wasm-pack --version ${{ env.WASM_PACK_VERSION }} --locked
       - name: Build reader WASM package
         run: wasm-pack build --target web --release --out-dir web/pkg .
+      - name: Install extension dependencies
+        run: npm ci
+        working-directory: extension
       - name: Test extension
         run: npm test
         working-directory: extension

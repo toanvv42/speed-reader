@@ -1,4 +1,3 @@
-import { extractArticle } from './extract.js';
 import { createSessionId, storeReaderSession } from './session.js';
 
 chrome.action.onClicked.addListener(tab => {
@@ -40,9 +39,13 @@ async function openCurrentTabInReader(tab) {
 }
 
 async function extractFromTab(tab) {
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ['extract.js']
+  });
   const [result] = await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    func: extractArticle
+    func: () => globalThis.__tinywinsExtractArticle()
   });
   if (!result?.result?.markdown) {
     throw new Error('No readable page content was returned.');

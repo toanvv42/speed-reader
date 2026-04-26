@@ -8,5 +8,9 @@
     "build:reader": "node scripts/build-reader.mjs",
     "package": "node scripts/package.mjs",
     "test": "node --test"
+  },
+  "devDependencies": {
+    "defuddle": "0.17.0",
+    "esbuild": "0.28.0"
   }
 }
