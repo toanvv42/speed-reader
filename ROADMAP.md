@@ -144,7 +144,7 @@ Goal: create features that are memorable and worth sharing.
 
 Goal: use the existing WASM direction to widen distribution.
 
-- [ ] Ship a browser MVP for local-only reading
+- [x] Ship a browser MVP for local-only reading
 - [ ] Support drag-and-drop for `md`, `txt`, and `docx`
 - [ ] Make mobile controls acceptable for simple reading sessions
 - [ ] Preserve the privacy-first message: no account required
@@ -287,7 +287,7 @@ Use this instead of the broader month buckets while the web app is the only acti
 
 ## Month 3
 
-- [ ] Ship browser MVP
+- [x] Ship browser MVP
 - [ ] Add bookmarks or note markers
 - [ ] Launch publicly
 - [ ] Collect and triage feedback
@@ -316,3 +316,4 @@ Use this section as an execution journal. Keep entries short and dated.
 - 2026-04-22: Updated the roadmap to make the web app the only active execution focus until further notice.
 - 2026-04-22: Shipped a web-first onboarding pass in `web/index.html`: clearer landing copy, built-in sample loading, visible preset controls, improved in-reader chapter/progress context, and a mobile status-bar layout that accommodates the preset flow.
 - 2026-04-22: Moved preset definitions into shared Rust code and switched the web app to wasm-backed preset timing so browser pacing stays aligned with the shared reader engine.
+- 2026-04-26: Added extension-session boot support to the web reader so the Tinywins Speed Reader extension can open extracted page content locally in the canonical Tinywins UI and return to the original page with `returnUrl`.

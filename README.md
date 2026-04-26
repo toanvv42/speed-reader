@@ -4,7 +4,7 @@ A calm, private reading instrument for long-form text.
 
 `speed-reader` presents one word at a time so you can stay with the sentence instead of scanning the page. It is built for focused reading of real documents, not hypey "10x faster" claims.
 
-The app runs in the terminal today, with a web reader already taking shape through the shared Rust reading engine.
+The app runs in the terminal and in the browser through the same Rust reading engine. The browser UI is also packaged into the Tinywins Speed Reader extension, where page content is extracted locally and opened in the same reader interface without sending article text to a server.
 
 Built with [ratatui](https://ratatui.rs) + [crossterm](https://github.com/crossterm-rs/crossterm), with inline images via [ratatui-image](https://github.com/benjajaja/ratatui-image). It is targeted at [Ghostty](https://ghostty.org/) and other terminals with graphics support, but falls back gracefully on simpler terminals.
 
@@ -107,6 +107,14 @@ The terminal app already includes:
 - per-block pacing differences for text, headings, code, paragraph breaks, and images
 - inline image loading with terminal graphics support when available
 
+The web reader includes:
+
+- paste, sample, drag-and-drop, and local file loading for markdown, text, `docx`, and `pdf`
+- the same WASM-backed reader engine used by extension builds
+- extension session boot via `?sessionId=...`, reading `speedReaderSession:<id>` from browser extension storage
+- `returnUrl` support so the extension reader can replace the current tab and then return to the original page
+- the canonical Tinywins UI used by both `tinywins.us` and the Chrome extension package
+
 ## Building
 
 ```sh
@@ -114,6 +122,14 @@ make                 # release build for host
 make install         # install to $PREFIX/bin (default ~/.local)
 make clean           # cargo clean + remove dist/
 ```
+
+Build the canonical web reader:
+
+```sh
+./scripts/build-web.sh
+```
+
+This writes `dist/index.html`, a single-file build used for the public web app. The extension build uses the same `web/index.html` UI but packages its script and WASM as external extension assets to comply with browser extension CSP.
 
 Cross-compiling (uses [`cargo-zigbuild`](https://github.com/rust-cross/cargo-zigbuild)):
 

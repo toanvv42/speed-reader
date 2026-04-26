@@ -388,6 +388,9 @@ body:not(.rsvp) #status { opacity: 0; transform: translateY(8px); pointer-events
   box-shadow: 0 0 0 3px rgba(184, 69, 30, 0.12);
 }
 #status button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+#btn-close-reader { display: none; }
+body.extension-session #btn-close-reader { display: inline-flex; }
+body.extension-session #btn-open { display: none; }
 
 #status .divider {
   width: 1px;
@@ -1701,7 +1704,8 @@ dialog#bookmarks-dialog .dialog-sub {
   #btn-wpm-up   { grid-area: faster; }
 
   /* Row 3: navigation + progress */
-  #btn-open     { grid-area: open; }
+  #btn-open,
+  #btn-close-reader { grid-area: open; }
   #progress     { grid-area: progress; }
   #btn-chapters { grid-area: chapters; }
 
@@ -1873,6 +1877,9 @@ dialog#bookmarks-dialog .dialog-sub {
 <div id="status">
   <button id="btn-open" title="Open (Ctrl+O or o)" aria-label="Open">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+  </button>
+  <button id="btn-close-reader" title="Return to page" aria-label="Return to original page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
   </button>
   <span class="divider"></span>
 
@@ -3136,18 +3143,18 @@ document.getElementById('btn-wpm-up').addEventListener('click', () => setWpm(wpm
 document.getElementById('btn-wpm-down').addEventListener('click', () => setWpm(wpm - 25));
 
 document.getElementById('btn-open').addEventListener('click', () => {
-  const returnUrl = pageParams.get('returnUrl');
-  if (returnUrl) {
-    stopTimer();
-    if (reader) reader.setPlaying(false);
-    persistReadingState({ force: true });
-    window.location.href = returnUrl;
-    return;
-  }
   stopTimer();
   if (reader) reader.setPlaying(false);
   persistReadingState({ force: true });
   exitRsvpMode();
+});
+document.getElementById('btn-close-reader').addEventListener('click', () => {
+  const returnUrl = pageParams.get('returnUrl');
+  if (!returnUrl) return;
+  stopTimer();
+  if (reader) reader.setPlaying(false);
+  persistReadingState({ force: true });
+  window.location.href = returnUrl;
 });
 document.getElementById('btn-chapters').addEventListener('click', openChapterDialog);
 $bookmarkButton.addEventListener('click', openBookmarksDialog);
@@ -3561,6 +3568,7 @@ async function loadExtensionSession() {
   const sessionId = pageParams.get('sessionId');
   const extensionStorage = globalThis.browser?.storage || globalThis.chrome?.storage;
   if (!sessionId || !extensionStorage) return;
+  document.body.classList.add('extension-session');
 
   const storage = extensionStorage.session || extensionStorage.local;
   const key = `speedReaderSession:${sessionId}`;
